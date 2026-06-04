@@ -1,5 +1,9 @@
 # Power House Gym — Desktop App dependencies
 
+# Web API (Vercel)
+flask==3.0.0
+flask-cors==4.0.0
+
 # GUI
 customtkinter==5.2.2
 
