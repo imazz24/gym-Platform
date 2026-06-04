@@ -221,6 +221,25 @@ tbody tr:hover td{background:var(--bg-elevated)}
 .field textarea{resize:vertical;min-height:90px}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
+/* intl phone field */
+.phone-field{position:relative;display:flex;gap:8px}
+.phone-cc{display:flex;align-items:center;gap:6px;background:var(--bg-dark);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size:14px;white-space:nowrap;flex:0 0 auto}
+.phone-cc:hover{border-color:var(--primary)}
+.phone-cc-flag{font-size:18px;line-height:1}
+.phone-cc-caret{color:var(--text-secondary);font-size:11px;margin-left:2px}
+.phone-num{flex:1 1 auto;min-width:0}
+.phone-dd{position:absolute;top:calc(100% + 6px);left:0;width:100%;max-width:360px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.45);z-index:30;overflow:hidden}
+.phone-dd[hidden]{display:none}
+.phone-search{width:100%;background:var(--bg-dark);border:none;border-bottom:1px solid var(--border);color:var(--text);padding:11px 14px;font-size:14px;border-radius:0}
+.phone-search:focus{outline:none}
+.phone-list{max-height:240px;overflow-y:auto}
+.phone-opt{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;font-size:14px}
+.phone-opt:hover,.phone-opt.active{background:var(--bg-hover)}
+.phone-opt .po-flag{font-size:18px;line-height:1}
+.phone-opt .po-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phone-opt .po-dial{color:var(--text-secondary);font-variant-numeric:tabular-nums}
+.phone-empty{padding:14px;text-align:center;color:var(--text-secondary);font-size:13px}
+
 /* modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:800;padding:20px;animation:fade .15s ease}
 @keyframes fade{from{opacity:0}to{opacity:1}}
@@ -418,6 +437,35 @@ const EXPENSE_CATEGORIES=["Electricity","Water","Internet","Gas","Phone Bill","R
 const PRODUCT_CATEGORIES=["nutrition","drinks","accessories","equipment","supplements","snacks"];
 const EXPENSE_ICONS={electricity:"💡",water:"🚰",internet:"🌐",gas:"🔥","phone bill":"📱",rent:"🏠",maintenance:"🔧",equipment:"🏋️",cleaning:"🧹",security:"🔐",supplies:"📦",refreshments:"☕",transportation:"🚗","employee salary":"👔",salary:"💵",bonus:"🎁",marketing:"📣",advertising:"📺",software:"💻",subscriptions:"📱",taxes:"🧾",insurance:"🛡️",licenses:"📋","bank fees":"🏦",miscellaneous:"📝",other:"📝"};
 const PRODUCT_ICONS={nutrition:"🥤",drinks:"🧃",accessories:"🧤",equipment:"🏋️",supplements:"💊",snacks:"🍫"};
+/* International dialing codes — {n:name, d:dial code, i:ISO} */
+const COUNTRY_CODES=[
+["Afghanistan","+93","AF"],["Albania","+355","AL"],["Algeria","+213","DZ"],["Andorra","+376","AD"],["Angola","+244","AO"],["Argentina","+54","AR"],["Armenia","+374","AM"],["Australia","+61","AU"],["Austria","+43","AT"],["Azerbaijan","+994","AZ"],
+["Bahamas","+1242","BS"],["Bahrain","+973","BH"],["Bangladesh","+880","BD"],["Barbados","+1246","BB"],["Belarus","+375","BY"],["Belgium","+32","BE"],["Belize","+501","BZ"],["Benin","+229","BJ"],["Bhutan","+975","BT"],["Bolivia","+591","BO"],["Bosnia and Herzegovina","+387","BA"],["Botswana","+267","BW"],["Brazil","+55","BR"],["Brunei","+673","BN"],["Bulgaria","+359","BG"],["Burkina Faso","+226","BF"],["Burundi","+257","BI"],
+["Cambodia","+855","KH"],["Cameroon","+237","CM"],["Canada","+1","CA"],["Cape Verde","+238","CV"],["Central African Republic","+236","CF"],["Chad","+235","TD"],["Chile","+56","CL"],["China","+86","CN"],["Colombia","+57","CO"],["Comoros","+269","KM"],["Congo","+242","CG"],["Congo (DRC)","+243","CD"],["Costa Rica","+506","CR"],["Côte d'Ivoire","+225","CI"],["Croatia","+385","HR"],["Cuba","+53","CU"],["Cyprus","+357","CY"],["Czechia","+420","CZ"],
+["Denmark","+45","DK"],["Djibouti","+253","DJ"],["Dominica","+1767","DM"],["Dominican Republic","+1809","DO"],
+["Ecuador","+593","EC"],["Egypt","+20","EG"],["El Salvador","+503","SV"],["Equatorial Guinea","+240","GQ"],["Eritrea","+291","ER"],["Estonia","+372","EE"],["Eswatini","+268","SZ"],["Ethiopia","+251","ET"],
+["Fiji","+679","FJ"],["Finland","+358","FI"],["France","+33","FR"],
+["Gabon","+241","GA"],["Gambia","+220","GM"],["Georgia","+995","GE"],["Germany","+49","DE"],["Ghana","+233","GH"],["Greece","+30","GR"],["Grenada","+1473","GD"],["Guatemala","+502","GT"],["Guinea","+224","GN"],["Guinea-Bissau","+245","GW"],["Guyana","+592","GY"],
+["Haiti","+509","HT"],["Honduras","+504","HN"],["Hong Kong","+852","HK"],["Hungary","+36","HU"],
+["Iceland","+354","IS"],["India","+91","IN"],["Indonesia","+62","ID"],["Iran","+98","IR"],["Iraq","+964","IQ"],["Ireland","+353","IE"],["Israel","+972","IL"],["Italy","+39","IT"],
+["Jamaica","+1876","JM"],["Japan","+81","JP"],["Jordan","+962","JO"],
+["Kazakhstan","+7","KZ"],["Kenya","+254","KE"],["Kiribati","+686","KI"],["Kosovo","+383","XK"],["Kuwait","+965","KW"],["Kyrgyzstan","+996","KG"],
+["Laos","+856","LA"],["Latvia","+371","LV"],["Lebanon","+961","LB"],["Lesotho","+266","LS"],["Liberia","+231","LR"],["Libya","+218","LY"],["Liechtenstein","+423","LI"],["Lithuania","+370","LT"],["Luxembourg","+352","LU"],
+["Macau","+853","MO"],["Madagascar","+261","MG"],["Malawi","+265","MW"],["Malaysia","+60","MY"],["Maldives","+960","MV"],["Mali","+223","ML"],["Malta","+356","MT"],["Mauritania","+222","MR"],["Mauritius","+230","MU"],["Mexico","+52","MX"],["Moldova","+373","MD"],["Monaco","+377","MC"],["Mongolia","+976","MN"],["Montenegro","+382","ME"],["Morocco","+212","MA"],["Mozambique","+258","MZ"],["Myanmar","+95","MM"],
+["Namibia","+264","NA"],["Nepal","+977","NP"],["Netherlands","+31","NL"],["New Zealand","+64","NZ"],["Nicaragua","+505","NI"],["Niger","+227","NE"],["Nigeria","+234","NG"],["North Korea","+850","KP"],["North Macedonia","+389","MK"],["Norway","+47","NO"],
+["Oman","+968","OM"],
+["Pakistan","+92","PK"],["Palestine","+970","PS"],["Panama","+507","PA"],["Papua New Guinea","+675","PG"],["Paraguay","+595","PY"],["Peru","+51","PE"],["Philippines","+63","PH"],["Poland","+48","PL"],["Portugal","+351","PT"],["Puerto Rico","+1787","PR"],
+["Qatar","+974","QA"],
+["Romania","+40","RO"],["Russia","+7","RU"],["Rwanda","+250","RW"],
+["Saudi Arabia","+966","SA"],["Senegal","+221","SN"],["Serbia","+381","RS"],["Seychelles","+248","SC"],["Sierra Leone","+232","SL"],["Singapore","+65","SG"],["Slovakia","+421","SK"],["Slovenia","+386","SI"],["Somalia","+252","SO"],["South Africa","+27","ZA"],["South Korea","+82","KR"],["South Sudan","+211","SS"],["Spain","+34","ES"],["Sri Lanka","+94","LK"],["Sudan","+249","SD"],["Suriname","+597","SR"],["Sweden","+46","SE"],["Switzerland","+41","CH"],["Syria","+963","SY"],
+["Taiwan","+886","TW"],["Tajikistan","+992","TJ"],["Tanzania","+255","TZ"],["Thailand","+66","TH"],["Timor-Leste","+670","TL"],["Togo","+228","TG"],["Tonga","+676","TO"],["Trinidad and Tobago","+1868","TT"],["Tunisia","+216","TN"],["Turkey","+90","TR"],["Turkmenistan","+993","TM"],
+["Uganda","+256","UG"],["Ukraine","+380","UA"],["United Arab Emirates","+971","AE"],["United Kingdom","+44","GB"],["United States","+1","US"],["Uruguay","+598","UY"],["Uzbekistan","+998","UZ"],
+["Vanuatu","+678","VU"],["Vatican City","+379","VA"],["Venezuela","+58","VE"],["Vietnam","+84","VN"],
+["Yemen","+967","YE"],
+["Zambia","+260","ZM"],["Zimbabwe","+263","ZW"]
+].map(c=>({n:c[0],d:c[1],i:c[2]}));
+const DEFAULT_DIAL="+212";
+function flagEmoji(iso){return [...iso.toUpperCase()].map(ch=>String.fromCodePoint(0x1F1E6+ch.charCodeAt(0)-65)).join("")}
 
 function genData(){
   _rng = mulberry32(42);
@@ -1072,6 +1120,62 @@ function modal(title,bodyHTML,onSave,saveLabel="Save"){
 const val=(ov,id)=>ov.querySelector("#"+id).value.trim();
 const numVal=(ov,id)=>parseFloat(ov.querySelector("#"+id).value)||0;
 
+/* ---------- International phone field ---------- */
+// Split a stored "+212600..." into its dial code + local number (longest dial-code match wins).
+function splitPhone(value){
+  const v=(value||"").trim();
+  if(v.startsWith("+")){
+    const match=COUNTRY_CODES.filter(c=>v.startsWith(c.d)).sort((a,b)=>b.d.length-a.d.length)[0];
+    if(match)return{dial:match.d,number:v.slice(match.d.length).replace(/[^\d]/g,"")};
+  }
+  return{dial:DEFAULT_DIAL,number:v.replace(/[^\d]/g,"")};
+}
+// Render the combined country-code dropdown + number input. `base` is the element id prefix (e.g. "mPhone").
+function phoneFieldHTML(base,value){
+  const {dial,number}=splitPhone(value);
+  const sel=COUNTRY_CODES.find(c=>c.d===dial)||COUNTRY_CODES.find(c=>c.d===DEFAULT_DIAL);
+  return `<div class="phone-field" id="${base}Wrap">
+    <button type="button" class="phone-cc" id="${base}Btn">
+      <span class="phone-cc-flag">${flagEmoji(sel.i)}</span><span class="phone-cc-dial">${sel.d}</span><span class="phone-cc-caret">▾</span>
+    </button>
+    <input type="hidden" id="${base}Dial" value="${sel.d}">
+    <input class="phone-num" id="${base}Num" type="tel" inputmode="numeric" placeholder="Phone number" value="${number||""}">
+    <div class="phone-dd" id="${base}Dd" hidden>
+      <input class="phone-search" id="${base}Search" placeholder="Search country or code…" autocomplete="off">
+      <div class="phone-list" id="${base}List"></div>
+    </div>
+  </div>`;
+}
+// Combined value for saving: dial code + digits, e.g. "+212600112233".
+function phoneVal(ov,base){
+  const dial=ov.querySelector("#"+base+"Dial").value;
+  const num=(ov.querySelector("#"+base+"Num").value||"").replace(/[^\d]/g,"");
+  return num?dial+num:"";
+}
+// Wire up the dropdown behaviour after the modal is in the DOM.
+function setupPhoneField(ov,base){
+  const wrap=ov.querySelector("#"+base+"Wrap");if(!wrap)return;
+  const btn=wrap.querySelector("#"+base+"Btn"),dd=wrap.querySelector("#"+base+"Dd"),
+        search=wrap.querySelector("#"+base+"Search"),list=wrap.querySelector("#"+base+"List"),
+        dialIn=wrap.querySelector("#"+base+"Dial");
+  function renderList(q){
+    const term=(q||"").trim().toLowerCase().replace(/^\+/,"");
+    const items=COUNTRY_CODES.filter(c=>!term||c.n.toLowerCase().includes(term)||c.d.replace("+","").includes(term)||c.i.toLowerCase()===term);
+    list.innerHTML=items.length?items.map(c=>`<div class="phone-opt${c.d===dialIn.value?' active':''}" data-dial="${c.d}" data-iso="${c.i}"><span class="po-flag">${flagEmoji(c.i)}</span><span class="po-name">${c.n}</span><span class="po-dial">${c.d}</span></div>`).join(""):`<div class="phone-empty">No match</div>`;
+  }
+  function open(){renderList("");search.value="";dd.hidden=false;setTimeout(()=>search.focus(),20)}
+  function closeDd(){dd.hidden=true}
+  btn.onclick=()=>{dd.hidden?open():closeDd()};
+  search.oninput=()=>renderList(search.value);
+  list.onclick=e=>{const opt=e.target.closest(".phone-opt");if(!opt)return;
+    dialIn.value=opt.dataset.dial;
+    btn.querySelector(".phone-cc-flag").textContent=flagEmoji(opt.dataset.iso);
+    btn.querySelector(".phone-cc-dial").textContent=opt.dataset.dial;
+    closeDd();wrap.querySelector("#"+base+"Num").focus();
+  };
+  document.addEventListener("mousedown",e=>{if(!wrap.contains(e.target))closeDd()});
+}
+
 function planOptions(sel){return PLAN_NAMES.map(p=>`<option ${p===sel?'selected':''}>${p}</option>`).join("")}
 
 function memberDialog(id){
@@ -1079,7 +1183,7 @@ function memberDialog(id){
   const body=`
     <div class="field"><label>Full Name *</label><input id="mName" value="${m.full_name||""}"></div>
     <div class="field-row">
-      <div class="field"><label>Phone *</label><input id="mPhone" value="${m.phone_number||""}"></div>
+      <div class="field"><label>Phone *</label>${phoneFieldHTML("mPhone",m.phone_number)}</div>
       <div class="field"><label>Date of Birth</label><input id="mDob" type="date" value="${m.date_of_birth||""}"></div>
     </div>
     <div class="field-row">
@@ -1091,9 +1195,10 @@ function memberDialog(id){
       <div class="field"><label>End Date</label><input id="mEnd" type="date" value="${m.end_date||iso(addDays(TODAY,30))}"></div>
     </div>
     <div class="field"><label><input type="checkbox" id="mActive" ${m.is_active?'checked':''}> Active membership</label></div>`;
-  modal(id?"Edit Member":"Add Member",body,ov=>{
+  const ov=modal(id?"Edit Member":"Add Member",body,ov=>{
     const name=val(ov,"mName");if(!name){toast("Name is required","danger");return false}
-    const data={full_name:name,phone_number:val(ov,"mPhone"),date_of_birth:val(ov,"mDob"),gym_plan:val(ov,"mPlan"),gym_fee_paid:numVal(ov,"mFee"),start_date:val(ov,"mStart"),end_date:val(ov,"mEnd"),is_active:ov.querySelector("#mActive").checked};
+    const phone=phoneVal(ov,"mPhone");if(!phone){toast("Phone is required","danger");return false}
+    const data={full_name:name,phone_number:phone,date_of_birth:val(ov,"mDob"),gym_plan:val(ov,"mPlan"),gym_fee_paid:numVal(ov,"mFee"),start_date:val(ov,"mStart"),end_date:val(ov,"mEnd"),is_active:ov.querySelector("#mActive").checked};
     if(id){Object.assign(m,data);log("Updated member: "+name);toast("Member updated","success")}
     else{const nm={id:nextId("members"),...data,support_phone_number:"",created_at:isoT(new Date())};DB.members.push(nm);
       // auto-payment record
@@ -1101,6 +1206,7 @@ function memberDialog(id){
       log("Added member: "+name);toast("Member added","success")}
     saveDB();render();
   });
+  setupPhoneField(ov,"mPhone");
 }
 function delMember(id){const m=DB.members.find(x=>x.id===id);if(confirm(`Delete ${m.full_name}?`)){DB.members=DB.members.filter(x=>x.id!==id);log("Deleted member: "+m.full_name);saveDB();toast("Member deleted","danger");render()}}
 function renewMember(id){const m=DB.members.find(x=>x.id===id);const dur={Daily:1,Weekly:7,Monthly:30,Quarterly:90,"Half-Year":180,Yearly:365,Student:30,VIP:30}[m.gym_plan]||30;m.start_date=iso(TODAY);m.end_date=iso(addDays(TODAY,dur));m.is_active=true;
@@ -1174,19 +1280,20 @@ function employeeDialog(id){
       <div class="field"><label>Role</label><select id="uRole"><option value="employee" ${u.role==='employee'?'selected':''}>employee</option><option value="admin" ${u.role==='admin'?'selected':''}>admin</option></select></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Phone</label><input id="uPhone" value="${u.phone||""}"></div>
+      <div class="field"><label>Phone</label>${phoneFieldHTML("uPhone",u.phone)}</div>
       <div class="field"><label>Salary (${cur()})</label><input id="uSalary" type="number" value="${u.salary||0}"></div>
     </div>
     <div class="field"><label>Hire Date</label><input id="uHire" type="date" value="${u.hire_date||iso(TODAY)}"></div>`;
-  modal(id?"Edit Employee":"Add Employee",body,ov=>{
+  const ov=modal(id?"Edit Employee":"Add Employee",body,ov=>{
     const n=val(ov,"uName"),un=val(ov,"uUser");if(!n||!un){toast("Name & username required","danger");return false}
-    const data={full_name:n,role:val(ov,"uRole"),phone:val(ov,"uPhone"),salary:numVal(ov,"uSalary"),hire_date:val(ov,"uHire")};
+    const data={full_name:n,role:val(ov,"uRole"),phone:phoneVal(ov,"uPhone"),salary:numVal(ov,"uSalary"),hire_date:val(ov,"uHire")};
     const pw=val(ov,"uPass");
     if(id){Object.assign(u,data);if(pw)u.password=pw;toast("Employee updated","success")}
     else{if(DB.users.some(x=>x.username===un)){toast("Username taken","danger");return false}
       DB.users.push({id:nextId("users"),username:un,password:pw||"changeme",working_days:6,address:"",notes:"",is_active:true,...data});log("Added employee: "+n);toast("Employee added","success")}
     saveDB();render();
   });
+  setupPhoneField(ov,"uPhone");
 }
 function delEmployee(id){const u=DB.users.find(x=>x.id===id);if(confirm(`Delete ${u.full_name}?`)){DB.users=DB.users.filter(x=>x.id!==id);log("Deleted employee: "+u.full_name);saveDB();toast("Employee deleted","danger");render()}}
 
