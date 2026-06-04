@@ -2,10 +2,15 @@
 Vercel serverless function - Gym Platform Web Demo
 Complete Flask API with in-memory demo data
 """
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from datetime import datetime, date, timedelta
+import os
 import random
+
+# Repo root (one level up from this api/ file). index.html is bundled
+# alongside the function via the "includeFiles" setting in vercel.json.
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 app = Flask(__name__)
 CORS(app)
@@ -59,7 +64,8 @@ DEMO_PAYMENTS = [
 
 @app.route('/')
 def index():
-    return jsonify({"service": "Gym Platform API", "status": "ok", "docs": "/api/health"})
+    """Serve the static web app (index.html bundled at the repo root)."""
+    return send_from_directory(ROOT_DIR, 'index.html')
 
 
 @app.route('/api/health')
