@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gym Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-dark:#0a0506; --bg-card:#160d0e; --bg-elevated:#211314; --bg-hover:#2e1a1b;
+  --primary:#e11d2e; --primary-dark:#991b1b; --primary-light:#f87171; --primary-glow:#1c0a0c;
+  --secondary:#b91c1c; --success:#22c55e; --success-dark:#16a34a; --warning:#f59e0b;
+  --danger:#ef4444; --danger-dark:#b91c1c; --info:#fb7185; --accent:#fb7185; --gold:#fbbf24;
+  --text:#f8fafc; --text-secondary:#cbb6b8; --text-muted:#8b7173; --border:#2c1819;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:'Inter',sans-serif;background:var(--bg-dark);color:var(--text);overflow:hidden}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg-dark)}
+::-webkit-scrollbar-thumb{background:var(--bg-elevated);border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:var(--bg-hover)}
+button{font-family:inherit;cursor:pointer;border:none}
+input,select,textarea{font-family:inherit}
+.hidden{display:none!important}
+
+/* ---------- shared keyframes ---------- */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinrev{to{transform:rotate(-360deg)}}
+@keyframes floaty{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-40px) scale(1.08)}66%{transform:translate(-25px,25px) scale(.95)}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 40px rgba(225,29,46,.45),0 0 0 0 rgba(225,29,46,.4)}50%{box-shadow:0 0 90px rgba(225,29,46,.85),0 0 0 22px rgba(225,29,46,0)}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-14px) rotate(4deg)}}
+@keyframes shimmer{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+@keyframes riseIn{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+@keyframes dropIn{from{opacity:0;transform:translateY(-26px)}to{opacity:1;transform:none}}
+@keyframes popIn{0%{opacity:0;transform:scale(.4)}70%{transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
+@keyframes particleUp{from{transform:translateY(0);opacity:0}10%{opacity:.9}90%{opacity:.9}to{transform:translateY(-110vh);opacity:0}}
+@keyframes fadeOut{to{opacity:0;visibility:hidden}}
+@keyframes zoomFade{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:none}}
+.fade-out{animation:fadeOut .6s ease forwards}
+
+/* ---------- SPLASH ---------- */
+#splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:22px;overflow:hidden;
+  background:radial-gradient(circle at 30% 20%,#2a0d10 0%,var(--bg-dark) 55%),radial-gradient(circle at 75% 80%,#240a18 0%,transparent 60%);background-color:var(--bg-dark)}
+.splash-circle{position:absolute;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(225,29,46,.22),transparent 70%);filter:blur(6px);animation:floaty 12s ease-in-out infinite}
+.splash-circle:nth-child(2){animation-duration:16s;animation-direction:reverse}
+.splash-badge-wrap{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.splash-ring{position:absolute;width:170px;height:170px;border-radius:50%;border:3px dashed rgba(225,29,46,.55);animation:spin 9s linear infinite}
+.splash-ring.r2{width:210px;height:210px;border-style:dotted;border-color:rgba(248,113,113,.35);animation:spinrev 14s linear infinite}
+.splash-badge{width:110px;height:110px;border-radius:30px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-size:54px;animation:pulseGlow 2.4s ease-in-out infinite}
+.splash-badge span{display:inline-block;animation:bob 2s ease-in-out infinite}
+.splash-title{font-size:36px;font-weight:800;letter-spacing:2px;z-index:2;animation:riseIn .7s ease both .1s;
+  background:linear-gradient(90deg,#fff,var(--primary-light),#fff,var(--primary),#fff);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:riseIn .7s ease both .1s,shimmer 3s linear infinite}
+.splash-sub{font-size:13px;font-weight:700;color:var(--primary-light);letter-spacing:5px;z-index:2;animation:riseIn .7s ease both .25s}
+.spinner{width:50px;height:50px;border:5px solid rgba(225,29,46,.18);border-top-color:var(--primary);border-radius:50%;animation:spin .9s linear infinite;z-index:2}
+.splash-bar{width:320px;max-width:80vw;height:9px;background:var(--bg-elevated);border-radius:5px;overflow:hidden;z-index:2;box-shadow:inset 0 0 0 1px var(--border)}
+.splash-bar > div{height:100%;width:0;background:linear-gradient(90deg,var(--primary-dark),var(--primary),var(--primary-light));border-radius:5px;transition:width .35s cubic-bezier(.4,0,.2,1);box-shadow:0 0 16px rgba(225,29,46,.7)}
+.splash-status{font-size:12px;color:var(--text-muted);z-index:2;animation:riseIn .5s ease both}
+.particles{position:absolute;inset:0;overflow:hidden;z-index:1;pointer-events:none}
+.particles i{position:absolute;bottom:-20px;font-size:18px;opacity:0;animation:particleUp linear infinite}
+
+/* ---------- LOGIN ---------- */
+@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes aurora{0%{transform:rotate(0) scale(1.4)}100%{transform:rotate(360deg) scale(1.4)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+#login{position:fixed;inset:0;background:var(--bg-dark);display:flex;align-items:center;justify-content:center;z-index:900;overflow:hidden;animation:zoomFade .6s ease both}
+#login::before{content:"";position:absolute;width:140vmax;height:140vmax;left:50%;top:50%;margin:-70vmax;z-index:0;opacity:.5;
+  background:conic-gradient(from 0deg,transparent 0deg,rgba(225,29,46,.25) 60deg,transparent 140deg,rgba(248,113,113,.18) 220deg,transparent 320deg);animation:aurora 22s linear infinite}
+.login-circle{position:absolute;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(225,29,46,.18),transparent 70%);filter:blur(4px);animation:floaty 14s ease-in-out infinite}
+.login-circle:nth-child(2){animation-duration:18s;animation-direction:reverse}
+.login-circle:nth-child(3){animation-duration:11s}
+.login-card{position:relative;z-index:2;background:linear-gradient(160deg,var(--bg-card),#120a0b);border:1px solid var(--border);border-radius:24px;width:430px;max-width:92vw;padding:50px 50px 40px;text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 0 1px rgba(225,29,46,.08);animation:popIn .55s cubic-bezier(.2,.8,.2,1) both}
+.login-card.shake{animation:shake .4s ease}
+.login-logo-wrap{position:relative;width:96px;height:96px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center}
+.login-logo-ring{position:absolute;inset:-12px;border-radius:50%;border:2px dashed rgba(225,29,46,.5);animation:spin 8s linear infinite}
+.login-logo{width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-size:38px;animation:pulseGlow 2.6s ease-in-out infinite}
+.login-logo span{display:inline-block;animation:bob 2.4s ease-in-out infinite}
+.login-title{font-size:32px;font-weight:800;animation:dropIn .6s ease both .1s;
+  background:linear-gradient(90deg,#fff,var(--primary-light),#fff);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:dropIn .6s ease both .1s,shimmer 4s linear infinite}
+.login-sub{font-size:13px;color:var(--text-muted);margin:6px 0 35px;animation:riseIn .6s ease both .2s}
+.input-row{display:flex;align-items:center;gap:10px;margin:14px 0;animation:riseIn .55s ease both}
+.input-row:nth-of-type(1){animation-delay:.28s}.input-row:nth-of-type(2){animation-delay:.38s}
+.input-icon{width:45px;height:45px;border-radius:10px;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:.25s}
+.input-row:focus-within .input-icon{background:var(--primary);transform:scale(1.08)}
+.input-row input{flex:1;height:45px;border-radius:10px;background:var(--bg-dark);border:1px solid var(--border);color:var(--text);padding:0 15px;font-size:14px;transition:.25s}
+.input-row input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(225,29,46,.18)}
+.login-btn{position:relative;overflow:hidden;width:100%;height:50px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-size:15px;font-weight:700;margin-top:22px;transition:.2s;animation:riseIn .55s ease both .48s;box-shadow:0 8px 24px rgba(225,29,46,.35)}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(225,29,46,.55)}
+.login-btn::after{content:"";position:absolute;top:0;left:-120%;width:60%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-20deg);animation:sweep 3s ease-in-out infinite}
+@keyframes sweep{0%{left:-120%}55%,100%{left:160%}}
+.login-error{color:var(--danger);font-size:13px;min-height:20px;margin-top:12px;font-weight:600}
+.demo-box{background:var(--bg-elevated);border-radius:10px;padding:12px;margin-top:18px;font-size:12px;color:var(--text-secondary);animation:riseIn .55s ease both .56s}
+.remember{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);margin-top:10px;animation:riseIn .55s ease both .44s}
+.remember input{width:16px;height:16px;accent-color:var(--primary)}
+#app{animation:zoomFade .55s ease both}
+
+/* ---------- APP LAYOUT ---------- */
+#app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:280px;background:var(--bg-card);height:100vh;display:flex;flex-direction:column;flex-shrink:0;border-right:1px solid var(--border);transition:width .2s}
+.brand{display:flex;align-items:center;gap:12px;padding:25px 20px}
+.brand-logo{width:46px;height:46px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.brand-text h1{font-size:18px;font-weight:800;white-space:nowrap}
+.brand-text span{font-size:10px;color:var(--text-muted);letter-spacing:1px;white-space:nowrap}
+.nav-scroll{flex:1;overflow-y:auto;padding-bottom:10px}
+.nav-section{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;padding:16px 20px 6px}
+.nav-item{display:flex;align-items:center;gap:12px;margin:2px 10px;padding:0 14px;height:42px;border-radius:10px;color:var(--text-secondary);font-size:14px;background:transparent;width:calc(100% - 20px);text-align:left;transition:.15s}
+.nav-item:hover{background:var(--bg-elevated)}
+.nav-item.active{background:var(--primary);color:#fff;font-weight:600}
+.nav-item .ic{font-size:16px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 7px}
+.user-box{margin:12px;padding:14px;background:var(--bg-elevated);border-radius:12px}
+.user-row{display:flex;align-items:center;gap:10px}
+.user-avatar{width:40px;height:40px;border-radius:10px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px}
+.user-name{font-size:14px;font-weight:600}
+.user-role{font-size:11px;color:var(--text-muted);text-transform:capitalize}
+.logout-btn{width:100%;margin-top:10px;height:38px;border-radius:9px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-size:13px;transition:.15s}
+.logout-btn:hover{background:var(--danger);border-color:var(--danger);color:#fff}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:22px 30px;border-bottom:1px solid var(--border);gap:14px;flex-shrink:0;flex-wrap:wrap}
+.topbar .menu-btn{display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);width:42px;height:42px;border-radius:10px;font-size:18px;color:var(--text);flex-shrink:0;transition:.15s}
+.topbar .menu-btn:hover{background:var(--primary)}
+
+/* collapsed icon-rail (desktop) */
+.sidebar.collapsed{width:78px}
+.sidebar.collapsed .brand{justify-content:center;padding:22px 0}
+.sidebar.collapsed .brand-text{display:none}
+.sidebar.collapsed .nav-section{text-align:center;padding:14px 0 6px;font-size:0}
+.sidebar.collapsed .nav-section::after{content:"•••";font-size:10px;color:var(--border)}
+.sidebar.collapsed .nav-item{justify-content:center;padding:0;width:calc(100% - 20px)}
+.sidebar.collapsed .nav-item span:not(.ic){display:none}
+.sidebar.collapsed .nav-badge{position:absolute;margin:0;transform:translate(14px,-12px);padding:0 5px}
+.sidebar.collapsed .nav-item{position:relative}
+.sidebar.collapsed .user-box{padding:10px;display:flex;flex-direction:column;align-items:center}
+.sidebar.collapsed .user-row > div:not(.user-avatar){display:none}
+.sidebar.collapsed .logout-btn{font-size:0;height:34px;margin-top:8px}
+.sidebar.collapsed .logout-btn::before{content:"⎋";font-size:16px}
+.sidebar-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:650;opacity:0;visibility:hidden;transition:.2s}
+.sidebar-backdrop.show{opacity:1;visibility:visible}
+.page-title{font-size:24px;font-weight:800}
+.page-sub{font-size:13px;color:var(--text-muted);margin-top:2px}
+.topbar-search{flex:1;min-width:160px;max-width:340px;display:none;align-items:center;gap:8px;background:var(--bg-elevated);border-radius:12px;padding:0 14px;height:44px}
+.topbar-search.active{display:flex}
+.topbar-search input{background:transparent;border:none;color:var(--text);flex:1;min-width:0;font-size:14px;outline:none}
+.content{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;padding:24px 30px 60px}
+
+/* ---------- COMPONENTS ---------- */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:24px}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;transition:.25s}
+.stat-card:hover{border-color:var(--primary);transform:translateY(-2px)}
+.stat-icon{font-size:34px;margin-bottom:10px}
+.stat-value{font-size:30px;font-weight:800}
+.stat-label{color:var(--text-muted);font-size:13px;margin-top:2px}
+.stat-trend{font-size:12px;margin-top:8px}
+.stat-trend.up{color:var(--success)} .stat-trend.down{color:var(--danger)}
+.grid-2{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:18px}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap}
+.card-head h2{font-size:17px;font-weight:700}
+.card-body{padding:18px 22px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:14px 22px;text-align:left;border-bottom:1px solid var(--border);font-size:14px}
+th{color:var(--text-muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--bg-elevated)}
+.badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;white-space:nowrap}
+.badge-success{background:rgba(34,197,94,.18);color:var(--success)}
+.badge-danger{background:rgba(239,68,68,.18);color:var(--danger)}
+.badge-warning{background:rgba(245,158,11,.18);color:var(--warning)}
+.badge-muted{background:var(--bg-elevated);color:var(--text-muted)}
+.badge-info{background:rgba(251,113,133,.18);color:var(--info)}
+.btn{padding:10px 18px;border-radius:9px;font-weight:600;font-size:14px;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-ghost{background:var(--bg-elevated);color:var(--text)}
+.btn-ghost:hover{background:var(--bg-hover)}
+.btn-success{background:var(--success);color:#fff} .btn-success:hover{background:var(--success-dark)}
+.btn-danger{background:var(--danger);color:#fff} .btn-danger:hover{background:var(--danger-dark)}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
+.icon-btn{background:var(--bg-elevated);width:34px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:var(--text);transition:.15s}
+.icon-btn:hover{background:var(--primary)}
+.search-inline{display:flex;align-items:center;gap:8px;background:var(--bg-dark);border:1px solid var(--border);border-radius:9px;padding:0 12px;height:40px}
+.search-inline input{background:transparent;border:none;color:var(--text);outline:none;font-size:13px;width:200px}
+.row-actions{display:flex;gap:6px}
+.empty{text-align:center;padding:50px 20px;color:var(--text-muted)}
+.empty .big{font-size:46px;margin-bottom:10px}
+
+.member-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-elevated);border-radius:10px;margin:6px 0}
+.avatar{width:38px;height:38px;border-radius:9px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.quick-btn{display:flex;align-items:center;gap:8px;width:100%;height:46px;border-radius:10px;font-weight:600;font-size:14px;padding:0 16px;color:#fff;margin-bottom:8px;text-align:left}
+
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.product-card{background:var(--bg-elevated);border:1px solid transparent;border-radius:14px;padding:20px;text-align:center;transition:.2s;position:relative}
+.product-card:hover{border-color:var(--primary);transform:translateY(-3px)}
+.product-icon{font-size:40px;margin-bottom:10px}
+.product-name{font-weight:700;margin-bottom:3px}
+.product-cat{font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:capitalize}
+.product-price{font-size:20px;font-weight:800;color:var(--primary-light)}
+.product-stock{font-size:12px;color:var(--text-secondary);margin-top:6px}
+.product-actions{display:flex;gap:6px;justify-content:center;margin-top:12px}
+
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border)}
+.list-item:last-child{border-bottom:none}
+.list-item:hover{background:var(--bg-elevated)}
+.li-left{display:flex;align-items:center;gap:14px}
+.li-icon{width:44px;height:44px;border-radius:10px;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.li-title{font-weight:600}
+.li-sub{font-size:12px;color:var(--text-muted)}
+
+/* progress bars (finance/reports) */
+.bar-track{height:10px;background:var(--bg-elevated);border-radius:5px;overflow:hidden}
+.bar-fill{height:100%;border-radius:5px}
+.kv{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;border-bottom:1px solid var(--border)}
+.kv:last-child{border-bottom:none}
+
+/* forms */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;background:var(--bg-dark);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 14px;font-size:14px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary)}
+.field textarea{resize:vertical;min-height:90px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:800;padding:20px;animation:fade .15s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;width:520px;max-width:96vw;max-height:90vh;overflow-y:auto;animation:rise .2s ease}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg-card);z-index:1}
+.modal-head h3{font-size:18px;font-weight:700}
+.modal-close{background:var(--bg-elevated);width:34px;height:34px;border-radius:8px;font-size:16px;color:var(--text)}
+.modal-body{padding:22px 24px}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:0 24px 22px}
+
+/* toast */
+#toasts{position:fixed;bottom:24px;right:24px;z-index:1100;display:flex;flex-direction:column;gap:10px}
+.toast{background:var(--bg-elevated);border-left:4px solid var(--primary);border-radius:10px;padding:14px 18px;min-width:240px;box-shadow:0 10px 30px rgba(0,0,0,.4);animation:slidein .25s ease;font-size:14px}
+.toast.success{border-left-color:var(--success)}
+.toast.danger{border-left-color:var(--danger)}
+@keyframes slidein{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+
+.section-title{font-size:15px;font-weight:700;margin:6px 0 14px;color:var(--text-secondary)}
+.pill-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.pill{padding:8px 16px;border-radius:20px;background:var(--bg-elevated);color:var(--text-secondary);font-size:13px;font-weight:600;transition:.15s}
+.pill.active{background:var(--primary);color:#fff}
+
+@media(max-width:980px){
+  .grid-2{grid-template-columns:1fr}
+}
+@media(max-width:820px){
+  .sidebar{position:fixed;z-index:700;left:0;top:0;width:280px!important;transform:translateX(-100%);transition:transform .22s ease;box-shadow:0 0 50px rgba(0,0,0,.5)}
+  .sidebar.open{transform:none}
+  /* on mobile the drawer is always full, never the icon rail */
+  .sidebar.collapsed .brand-text,.sidebar.collapsed .nav-item span,.sidebar.collapsed .user-row > div,.sidebar.collapsed .nav-section{display:revert;font-size:revert}
+  .sidebar.collapsed .nav-item{justify-content:flex-start;padding:0 14px}
+  .sidebar.collapsed .logout-btn{font-size:13px}
+  .sidebar.collapsed .logout-btn::before{content:none}
+  .topbar{padding:14px 18px}
+  .topbar-search{flex-basis:100%;max-width:none;order:3}
+  .content{padding:18px}
+  .page-title{font-size:20px}
+  th,td{padding:11px 14px}
+}
+/* turn wide data tables into stacked cards on phones */
+@media(max-width:640px){
+  #content table thead{display:none}
+  #content table,#content table tbody,#content table tr,#content table td{display:block;width:100%}
+  #content table tr{border-bottom:8px solid var(--bg-dark);background:var(--bg-elevated);border-radius:12px;margin:0 0 10px;padding:6px 0;overflow:hidden}
+  #content table tbody tr:hover td{background:transparent}
+  #content table td{display:flex;align-items:center;justify-content:space-between;gap:16px;border:none;padding:9px 16px;text-align:right;font-size:14px}
+  #content table td::before{content:attr(data-th);color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left;flex-shrink:0}
+  #content table td[data-th=""]::before,#content table td:not([data-th])::before{content:none}
+  #content table td[colspan]{justify-content:center}
+  #content table td[colspan]::before{content:none}
+  .row-actions{justify-content:flex-end}
+}
+@media(max-width:560px){
+  .stats-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .stat-value{font-size:24px}
+  .stat-card{padding:18px}
+  .topbar{padding:14px}
+  .content{padding:14px}
+  .card-head{padding:14px 16px}
+  .card-body{padding:14px 16px}
+  th,td{padding:10px 12px;font-size:13px}
+  .page-title{font-size:18px}
+  .page-sub{display:none}
+  .login-card{padding:38px 26px 30px}
+  .field-row{grid-template-columns:1fr}
+  .product-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+  .modal-body{padding:18px}
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="particles" id="particles"></div>
+  <div class="splash-circle" style="width:300px;height:300px;left:8%;top:15%"></div>
+  <div class="splash-circle" style="width:380px;height:380px;right:6%;bottom:8%"></div>
+  <div class="splash-badge-wrap">
+    <div class="splash-ring"></div>
+    <div class="splash-ring r2"></div>
+    <div class="splash-badge"><span>🏋️</span></div>
+  </div>
+  <div class="splash-title">GYM PLATFORM</div>
+  <div class="splash-sub">TRAIN · TRACK · TRANSFORM</div>
+  <div class="spinner"></div>
+  <div class="splash-bar"><div id="splashFill"></div></div>
+  <div class="splash-status" id="splashStatus">Warming up the engine…</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login" class="hidden">
+  <div class="login-circle" style="width:200px;height:200px;left:10%;top:12%"></div>
+  <div class="login-circle" style="width:320px;height:320px;right:8%;top:30%"></div>
+  <div class="login-circle" style="width:150px;height:150px;left:30%;bottom:10%"></div>
+  <div class="login-card" id="loginCard">
+    <div class="login-logo-wrap">
+      <div class="login-logo-ring"></div>
+      <div class="login-logo"><span>🏋️</span></div>
+    </div>
+    <div class="login-title">GYM PLATFORM</div>
+    <div class="login-sub">💪  Welcome back, let's get to work</div>
+    <div class="input-row">
+      <div class="input-icon">👤</div>
+      <input id="loginUser" placeholder="Username" autocomplete="username">
+    </div>
+    <div class="input-row">
+      <div class="input-icon">🔒</div>
+      <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password">
+    </div>
+    <label class="remember"><input type="checkbox" id="rememberMe"> Remember me</label>
+    <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="demo-box">💡 Demo: <b>admin / admin123</b> &nbsp;·&nbsp; staff: sara / sara123</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">🏋️</div>
+      <div class="brand-text">
+        <h1 id="brandName">GYM PLATFORM</h1>
+        <span>TRAIN · TRACK · TRANSFORM</span>
+      </div>
+    </div>
+    <div class="nav-scroll" id="navScroll"></div>
+    <div class="user-box">
+      <div class="user-row">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div>
+          <div class="user-name" id="userNameLbl">Administrator</div>
+          <div class="user-role" id="userRoleLbl">admin</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">⎋  Sign Out</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:14px">
+        <button class="menu-btn" title="Toggle menu" onclick="toggleSidebar()">☰</button>
+        <div>
+          <div class="page-title" id="pageTitle">Dashboard</div>
+          <div class="page-sub" id="pageSub"></div>
+        </div>
+      </div>
+      <div class="topbar-search" id="topSearchWrap">
+        <span>🔍</span><input id="topSearch" placeholder="Search…" oninput="onSearch(this.value)">
+      </div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* =========================================================================
+   GYM PLATFORM — Web App (client-side, localStorage)
+   Same design / login / features as the desktop app. No server DB needed:
+   all data lives in the browser so the client can add/edit data locally.
+   ========================================================================= */
+
+const STORE_KEY = "gym_platform_v2";
+const CURRENCY_DEFAULT = "$";   // US Dollar — used as a prefix everywhere
+
+/* ---------- seeded RNG (mirrors seed.py random.seed(42)) ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let _rng = mulberry32(42);
+const rnd = ()=>_rng();
+const ri = (lo,hi)=>Math.floor(rnd()*(hi-lo+1))+lo;
+const pick = arr=>arr[Math.floor(rnd()*arr.length)];
+function sample(arr,k){const c=[...arr];const out=[];for(let i=0;i<k&&c.length;i++){out.push(c.splice(Math.floor(rnd()*c.length),1)[0])}return out}
+
+/* ---------- date helpers ---------- */
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function iso(d){return new Date(d).toISOString().slice(0,10)}
+function isoT(d){return new Date(d).toISOString()}
+function fmtDate(s){if(!s)return"—";const d=new Date(s);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
+function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/86400000)}
+
+/* ---------- seed data ---------- */
+const FIRST=["Alice","Bilal","Carlos","Diana","Emir","Fatima","George","Hana","Imane","Jamal","Karim","Lina","Mohammed","Nadia","Omar","Priya","Rania","Samir","Tariq","Umar","Vera","Walid","Yasmine","Zaid","Adam","Carla","Driss","Sofia","Nabil","Leila"];
+const LAST=["Strong","Power","Iron","Steel","Swift","Bolt","Flex","Stone","Hawk","Titan","Vital","Forge","Peak","Rush","Core","Pulse","Lift","Hammer","Blaze","Storm"];
+const PLANS={Daily:[1,8],Weekly:[7,25],Monthly:[30,300],Quarterly:[90,800],"Half-Year":[180,1400],Yearly:[365,2500],Student:[30,200],VIP:[30,600]};
+const PLAN_NAMES=Object.keys(PLANS);
+const EXPENSE_PRESETS=[["Electricity","Monthly electricity bill",800,1800],["Water","Monthly water bill",200,600],["Internet","Internet service fee",300,500],["Rent","Monthly rent payment",5000,9000],["Maintenance","Equipment maintenance",400,2000],["Cleaning","Cleaning services",300,900],["Equipment","New equipment purchase",1500,6000],["Marketing","Social media campaign",500,2500],["Supplies","Front-desk supplies",150,700],["Security","Security service",600,1200],["Software","Management software",200,800],["Insurance","Facility insurance",900,2200]];
+const PRODUCTS_SEED=[["Water Bottle","drinks",2,100],["Protein Bar","nutrition",5,60],["Greek Yogurt","nutrition",4,30],["Gym Towel","accessories",8,40],["Whey Protein Shake","nutrition",7,25],["Energy Drink","drinks",3.5,80],["Resistance Band","accessories",12,20],["Gym Gloves","accessories",15,18],["Shaker Bottle","accessories",6,35],["Pre-Workout","nutrition",25,12],["Headband","accessories",5,50],["Protein Chips","nutrition",3,45],["BCAA Drink","nutrition",6.5,22],["Lifting Straps","accessories",10,16]];
+const ACTIVITIES=["Personal Training","Yoga Class","CrossFit","Boxing","Spin Class","Pilates"];
+const EXPENSE_CATEGORIES=["Electricity","Water","Internet","Gas","Phone Bill","Rent","Maintenance","Equipment","Cleaning","Security","Supplies","Refreshments","Transportation","Employee Salary","Bonus","Marketing","Advertising","Software","Subscriptions","Taxes","Insurance","Licenses","Bank Fees","Miscellaneous","Other"];
+const PRODUCT_CATEGORIES=["nutrition","drinks","accessories","equipment","supplements","snacks"];
+const EXPENSE_ICONS={electricity:"💡",water:"🚰",internet:"🌐",gas:"🔥","phone bill":"📱",rent:"🏠",maintenance:"🔧",equipment:"🏋️",cleaning:"🧹",security:"🔐",supplies:"📦",refreshments:"☕",transportation:"🚗","employee salary":"👔",salary:"💵",bonus:"🎁",marketing:"📣",advertising:"📺",software:"💻",subscriptions:"📱",taxes:"🧾",insurance:"🛡️",licenses:"📋","bank fees":"🏦",miscellaneous:"📝",other:"📝"};
+const PRODUCT_ICONS={nutrition:"🥤",drinks:"🧃",accessories:"🧤",equipment:"🏋️",supplements:"💊",snacks:"🍫"};
+
+function genData(){
+  _rng = mulberry32(42);
+  const users=[
+    {id:1,username:"admin",password:"admin123",full_name:"Main Administrator",role:"admin",salary:0,working_days:6,phone:"+212600112233",hire_date:iso(addDays(TODAY,-900)),address:"",notes:"",is_active:true},
+    {id:2,username:"sara",password:"sara123",full_name:"Sara Bennani",role:"employee",salary:4200,working_days:6,phone:"+212611223344",hire_date:iso(addDays(TODAY,-400)),address:"",notes:"",is_active:true},
+    {id:3,username:"youssef",password:"youssef123",full_name:"Youssef El Amrani",role:"employee",salary:3800,working_days:5,phone:"+212622334455",hire_date:iso(addDays(TODAY,-250)),address:"",notes:"",is_active:true},
+    {id:4,username:"khalid",password:"khalid123",full_name:"Khalid Tazi",role:"employee",salary:3500,working_days:6,phone:"+212633445566",hire_date:iso(addDays(TODAY,-120)),address:"",notes:"",is_active:true},
+  ];
+  const products=PRODUCTS_SEED.map((p,i)=>({id:i+1,name:p[0],category:p[1],price:p[2],stock:p[3],is_available:true}));
+
+  // members
+  let buckets=[].concat(Array(16).fill("active"),Array(4).fill("expiring"),Array(5).fill("expired"),Array(3).fill("inactive"));
+  for(let i=buckets.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[buckets[i],buckets[j]]=[buckets[j],buckets[i]]}
+  const members=[];const used=new Set();
+  buckets.forEach((status,i)=>{
+    let name;do{name=pick(FIRST)+" "+pick(LAST)}while(used.has(name));used.add(name);
+    const plan=pick(PLAN_NAMES);const[duration,fee]=PLANS[plan];
+    let end,active;
+    if(status==="active"){end=addDays(TODAY,ri(12,320));active=true}
+    else if(status==="expiring"){end=addDays(TODAY,ri(1,7));active=true}
+    else if(status==="expired"){end=addDays(TODAY,-ri(1,60));active=true}
+    else{end=addDays(TODAY,-ri(20,120));active=false}
+    const start=addDays(end,-duration);
+    let dob;
+    if(i<2)dob=new Date(ri(1985,2003),TODAY.getMonth(),TODAY.getDate());
+    else if(i<5){const fut=addDays(TODAY,ri(1,14));dob=new Date(ri(1985,2003),fut.getMonth(),fut.getDate())}
+    else dob=new Date(ri(1980,2004),ri(0,11),ri(1,28));
+    members.push({id:i+1,full_name:name,date_of_birth:iso(dob),phone_number:"+2126"+ri(10000000,99999999),support_phone_number:"",start_date:iso(start),end_date:iso(end),gym_plan:plan,gym_fee_paid:fee,is_active:active,created_at:isoT(addDays(start,0))});
+  });
+
+  // payments
+  let rcp=1;const payments=[];
+  members.forEach(m=>{
+    payments.push({id:payments.length+1,member_id:m.id,member_name:m.full_name,amount:m.gym_fee_paid,payment_type:"Membership",description:m.gym_plan+" membership",receipt_number:"RCP-"+String(rcp++).padStart(4,"0"),paid_at:isoT(addDays(m.start_date,0))});
+    if(rnd()<0.5)payments.push({id:payments.length+1,member_id:m.id,member_name:m.full_name,amount:Math.round(m.gym_fee_paid*(0.8+rnd()*0.2)),payment_type:"Renewal",description:"Membership renewal",receipt_number:"RCP-"+String(rcp++).padStart(4,"0"),paid_at:isoT(addDays(TODAY,-ri(1,75)))});
+  });
+  for(let i=0;i<40;i++){const m=pick(members);const opt=rnd()<0.5?["Product Sale",2,30]:["Day Pass",5,15];payments.push({id:payments.length+1,member_id:m.id,member_name:m.full_name,amount:Math.round((opt[1]+rnd()*(opt[2]-opt[1]))*100)/100,payment_type:opt[0],description:opt[0],receipt_number:"RCP-"+String(rcp++).padStart(4,"0"),paid_at:isoT(addDays(TODAY,-ri(0,300)))})}
+
+  // expenses
+  let en=1;const expenses=[];
+  for(let mb=0;mb<11;mb++){sample(EXPENSE_PRESETS,ri(3,6)).forEach(([cat,desc,lo,hi])=>{expenses.push({id:expenses.length+1,title:desc,description:desc,amount:ri(lo,hi),category:cat,receipt_number:"EXP-"+String(en++).padStart(4,"0"),created_by:pick(users).username,created_at:isoT(addDays(TODAY,-(mb*30+ri(0,27))))})})}
+
+  // purchases
+  const purchases=[];
+  for(let i=0;i<18;i++){const m=pick(members);const p=pick(products);const q=ri(1,3);purchases.push({id:purchases.length+1,member_id:m.id,member_name:m.full_name,product_id:p.id,product_name:p.name,quantity:q,total_price:Math.round(p.price*q*100)/100,purchased_by:pick(users).username,purchased_at:isoT(addDays(TODAY,-ri(0,90)))})}
+
+  // member activities
+  const memberActivities=[];
+  for(let i=0;i<12;i++){const m=pick(members);memberActivities.push({id:i+1,member_id:m.id,member_name:m.full_name,activity_type:pick(ACTIVITIES),fee:ri(50,300),is_paid:rnd()<0.7,enrolled_at:isoT(addDays(TODAY,-ri(0,120)))})}
+
+  // logs
+  const logs=[];let lid=1;
+  users.forEach(e=>{for(let i=0;i<ri(4,9);i++)logs.push({id:lid++,employee_username:e.username,action:"Logged in",created_at:isoT(addDays(TODAY,-ri(0,30)))})});
+  sample(members,8).forEach(m=>{const e=pick(users);logs.push({id:lid++,employee_username:e.username,action:"Check-in: "+m.full_name,created_at:isoT(TODAY)})});
+  for(let i=0;i<35;i++){const m=pick(members);const e=pick(users);logs.push({id:lid++,employee_username:e.username,action:"Check-in: "+m.full_name,created_at:isoT(addDays(TODAY,-ri(1,14)))})}
+  for(let i=0;i<4;i++){const e=pick(users.slice(1));const lt=pick(["Vacation","Sick Leave","Personal"]);const s=addDays(TODAY,ri(3,30));logs.push({id:lid++,employee_username:e.username,action:`Leave Request: ${lt} from ${iso(s)} to ${iso(addDays(s,ri(1,5)))}`,created_at:isoT(addDays(TODAY,-ri(0,20)))})}
+  sample(members,6).forEach(m=>{const e=pick(users);logs.push({id:lid++,employee_username:e.username,action:"Added member: "+m.full_name,created_at:isoT(m.start_date)})});
+
+  // maintenance
+  const maintenance=[
+    {id:1,title:"Treadmill #3 belt replacement",description:"Belt slipping during use",priority:"High",status:"Open",created_by:"sara",created_at:isoT(addDays(TODAY,-2))},
+    {id:2,title:"AC unit servicing",description:"Annual maintenance of cooling system",priority:"Medium",status:"In Progress",created_by:"youssef",created_at:isoT(addDays(TODAY,-6))},
+    {id:3,title:"Locker room light fix",description:"Two bulbs out in men's locker room",priority:"Low",status:"Done",created_by:"khalid",created_at:isoT(addDays(TODAY,-12))},
+  ];
+
+  // leaves
+  const leaves=[
+    {id:1,employee_username:"sara",type:"Vacation",start_date:iso(addDays(TODAY,7)),end_date:iso(addDays(TODAY,12)),reason:"Family trip",status:"Pending",created_at:isoT(addDays(TODAY,-1))},
+    {id:2,employee_username:"youssef",type:"Sick Leave",start_date:iso(addDays(TODAY,-2)),end_date:iso(addDays(TODAY,-1)),reason:"Flu",status:"Approved",created_at:isoT(addDays(TODAY,-3))},
+  ];
+
+  const settings={
+    gym_name:"Gym Platform",currency:CURRENCY_DEFAULT,country_code:"212",
+    auto_birthday_enabled:true,auto_expiry_enabled:true,
+    birthday_message:"🎂🎉 Happy Birthday {name}! 🎉🎂\n\nWishing you a strong and healthy year ahead! 💪🔥\nWelcome to your {age}th year!\n\nFrom: {gym_name} 🏋️",
+    expiry_message:"Hello {name}! 👋\n\nYour {gym_name} membership ({plan}) expires on {date} — that's in {days} day(s).\n\nRenew now to keep your progress going! 💪",
+    broadcast_message:"📢 {gym_name} Announcement\n\nHello {name}! We have an exciting event coming up. Stay tuned for more details! 🏋️🔥",
+  };
+
+  return {users,members,products,payments,expenses,purchases,memberActivities,logs,maintenance,leaves,settings,
+          _seq:{members:members.length,products:products.length,payments:payments.length,expenses:expenses.length,users:users.length,purchases:purchases.length,maintenance:maintenance.length,leaves:leaves.length,logs:lid,memberActivities:memberActivities.length}};
+}
+
+/* ---------- DB (localStorage) ---------- */
+let DB=null;
+function loadDB(){
+  const raw=localStorage.getItem(STORE_KEY);
+  if(raw){try{DB=JSON.parse(raw);
+    // migrate older data to US Dollar
+    if(DB.settings&&(!DB.settings.currency||DB.settings.currency==="DH")){DB.settings.currency="$";saveDB()}
+    return}catch(e){}}
+  DB=genData();saveDB();
+}
+function saveDB(){localStorage.setItem(STORE_KEY,JSON.stringify(DB))}
+function resetDB(){if(confirm("Reset ALL data back to the demo dataset? Your local changes will be lost.")){localStorage.removeItem(STORE_KEY);loadDB();toast("Demo data restored","success");render()}}
+function nextId(key){DB._seq[key]=(DB._seq[key]||0)+1;return DB._seq[key]}
+function cur(){return DB.settings.currency||CURRENCY_DEFAULT}
+function money(n){return cur()+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2})}
+function log(action){DB.logs.push({id:nextId("logs"),employee_username:SESSION.username,action,created_at:isoT(new Date())})}
+
+/* ---------- session ---------- */
+let SESSION=null;
+let CURRENT="dashboard";
+let SEARCH="";
+
+/* ---------- member status helper ---------- */
+function memberStatus(m){
+  const end=new Date(m.end_date);end.setHours(0,0,0,0);
+  if(!m.is_active)return{label:"Inactive",cls:"badge-muted"};
+  if(end<TODAY)return{label:"Expired",cls:"badge-danger"};
+  if(end<=addDays(TODAY,7))return{label:"Expiring",cls:"badge-warning"};
+  return{label:"Active",cls:"badge-success"};
+}
+function age(dob){const d=new Date(dob);let a=TODAY.getFullYear()-d.getFullYear();const m=TODAY.getMonth()-d.getMonth();if(m<0||(m===0&&TODAY.getDate()<d.getDate()))a--;return a}
+function daysToBirthday(dob){const d=new Date(dob);let next=new Date(TODAY.getFullYear(),d.getMonth(),d.getDate());if(next<TODAY)next=new Date(TODAY.getFullYear()+1,d.getMonth(),d.getDate());return daysBetween(TODAY,next)}
+
+/* =========================================================================
+   NAV
+   ========================================================================= */
+const NAV=[
+  {section:"MAIN MENU",items:[["dashboard","📊","Dashboard"],["members","👥","Members"],["payments","💳","Payments"],["alerts","🔔","Alerts"]]},
+  {section:"ENGAGEMENT",items:[["birthdays","🎂","Birthdays"],["broadcast","📢","Broadcast"]]},
+  {section:"SERVICES",items:[["checkin","✅","Check-In"],["leave","🏖️","Leave Request"],["expenses","💰","Expenses"],["maintenance","🔧","Maintenance"]]},
+  {section:"ADMIN TOOLS",admin:true,items:[["employees","👔","Employees"],["activity","👁️","Activity Tracker"],["products","📦","Products"],["finance","💵","Finance"],["reports","📈","Reports"],["settings","⚙️","Settings"],["logs","📜","Audit Logs"]]},
+];
+const PAGE_META={
+  dashboard:["Dashboard",()=>"Welcome back, "+SESSION.full_name+"!"],
+  members:["Members Management","Manage your gym members"],
+  payments:["Payments","Track all transactions"],
+  alerts:["Alerts","Memberships needing attention"],
+  birthdays:["Birthdays","Celebrate your members 🎉"],
+  broadcast:["Broadcast","Send announcements via WhatsApp"],
+  checkin:["Check-In","Mark member attendance"],
+  leave:["Leave Requests","Staff time-off"],
+  expenses:["Expenses","Track your spending"],
+  maintenance:["Maintenance","Facility & equipment tasks"],
+  employees:["Employees","Manage your staff"],
+  activity:["Activity Tracker","Member activities & enrollments"],
+  products:["Products","Inventory & shop"],
+  finance:["Finance","Revenue, expenses & profit"],
+  reports:["Reports","Business insights"],
+  settings:["Settings","Configure your platform"],
+  logs:["Audit Logs","Everything that happened"],
+};
+const SEARCH_PAGES=["members","payments","expenses","products","employees","logs"];
+
+function buildNav(){
+  const wrap=document.getElementById("navScroll");wrap.innerHTML="";
+  NAV.forEach(sec=>{
+    if(sec.admin&&SESSION.role!=="admin")return;
+    const lbl=document.createElement("div");lbl.className="nav-section";lbl.textContent=sec.section;wrap.appendChild(lbl);
+    sec.items.forEach(([key,icon,text])=>{
+      const b=document.createElement("button");b.className="nav-item"+(key===CURRENT?" active":"");b.dataset.key=key;
+      let badge="";
+      if(key==="alerts"){const n=alertCount();if(n)badge=`<span class="nav-badge">${n}</span>`}
+      if(key==="birthdays"){const n=DB.members.filter(m=>daysToBirthday(m.date_of_birth)<=7).length;if(n)badge=`<span class="nav-badge">${n}</span>`}
+      b.title=text;
+      b.innerHTML=`<span class="ic">${icon}</span><span>${text}</span>${badge}`;
+      b.onclick=()=>go(key);
+      wrap.appendChild(b);
+    });
+  });
+}
+function alertCount(){return DB.members.filter(m=>{const s=memberStatus(m);return s.label==="Expired"||s.label==="Expiring"}).length}
+
+function toggleSidebar(){
+  const sb=document.getElementById("sidebar");
+  if(window.innerWidth<=820){
+    const open=sb.classList.toggle("open");
+    document.getElementById("sidebarBackdrop").classList.toggle("show",open);
+  }else{
+    const col=sb.classList.toggle("collapsed");
+    try{localStorage.setItem("gym_sidebar",col?"1":"0")}catch(e){}
+  }
+}
+function closeSidebar(){
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebarBackdrop").classList.remove("show");
+}
+function go(key){
+  CURRENT=key;SEARCH="";
+  closeSidebar();
+  document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.key===key));
+  const meta=PAGE_META[key];
+  document.getElementById("pageTitle").textContent=meta[0];
+  document.getElementById("pageSub").textContent=typeof meta[1]==="function"?meta[1]():meta[1];
+  const showSearch=SEARCH_PAGES.includes(key);
+  document.getElementById("topSearchWrap").classList.toggle("active",showSearch);
+  document.getElementById("topSearch").value="";
+  document.getElementById("content").scrollTop=0;
+  render();
+}
+function onSearch(v){SEARCH=v.toLowerCase().trim();render()}
+
+/* =========================================================================
+   RENDER ROUTER
+   ========================================================================= */
+function render(){
+  buildNav();
+  const c=document.getElementById("content");
+  const fn=PAGES[CURRENT];
+  c.innerHTML=fn?fn():"<div class='empty'>Coming soon</div>";
+  decorateTables();
+}
+// Label each table cell with its column header so phones can show rows as cards.
+function decorateTables(){
+  document.querySelectorAll("#content table").forEach(t=>{
+    const ths=[...t.querySelectorAll("thead th")].map(th=>th.textContent.trim());
+    t.querySelectorAll("tbody tr").forEach(tr=>{
+      [...tr.children].forEach((td,i)=>{
+        if(td.hasAttribute("colspan"))return;
+        td.setAttribute("data-th",ths[i]||"");
+      });
+    });
+  });
+}
+
+const PAGES={
+  dashboard:pageDashboard, members:pageMembers, payments:pagePayments, alerts:pageAlerts,
+  birthdays:pageBirthdays, broadcast:pageBroadcast, checkin:pageCheckin, leave:pageLeave,
+  expenses:pageExpenses, maintenance:pageMaintenance, employees:pageEmployees, activity:pageActivity,
+  products:pageProducts, finance:pageFinance, reports:pageReports, settings:pageSettings, logs:pageLogs,
+};
+
+/* ---------- DASHBOARD ---------- */
+function pageDashboard(){
+  const active=DB.members.filter(m=>memberStatus(m).label==="Active"||memberStatus(m).label==="Expiring").length;
+  const expiring=DB.members.filter(m=>memberStatus(m).label==="Expiring").length;
+  const expired=DB.members.filter(m=>memberStatus(m).label==="Expired").length;
+  const monthStart=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);
+  const revenue=DB.payments.filter(p=>new Date(p.paid_at)>=monthStart).reduce((s,p)=>s+p.amount,0);
+  const todayPays=DB.payments.filter(p=>iso(p.paid_at)===iso(TODAY));
+  const todayRev=todayPays.reduce((s,p)=>s+p.amount,0);
+
+  const stats=[
+    ["👥",active,"Active Members","var(--primary)","up","↑ 5%"],
+    ["⏰",expiring,"Expiring Soon","var(--warning)","",""],
+    ["⚠️",expired,"Expired","var(--danger)","down","↓ 12%"],
+    ["💵",money(revenue),"Monthly Revenue","var(--success)","up","↑ 8%"],
+  ];
+  let html=`<div class="stats-grid">`+stats.map(s=>`
+    <div class="stat-card">
+      <div class="stat-icon">${s[0]}</div>
+      <div class="stat-value" style="color:${s[3]}">${s[1]}</div>
+      <div class="stat-label">${s[2]}</div>
+      ${s[5]?`<div class="stat-trend ${s[4]}">${s[5]} this month</div>`:""}
+    </div>`).join("")+`</div>`;
+
+  const recent=[...DB.members].sort((a,b)=>b.id-a.id).slice(0,8);
+  html+=`<div class="grid-2">
+    <div class="card">
+      <div class="card-head"><h2>📋 Recent Members</h2><button class="btn btn-ghost btn-sm" onclick="go('members')">View All →</button></div>
+      <div class="card-body">${recent.map(m=>{const s=memberStatus(m);return `
+        <div class="member-row">
+          <div class="avatar">${m.full_name[0]}</div>
+          <div style="flex:1">
+            <div style="font-weight:600">${m.full_name}</div>
+            <div class="li-sub">📞 ${m.phone_number}</div>
+          </div>
+          <span class="badge ${s.cls}">● ${s.label}</span>
+        </div>`}).join("")}</div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-head"><h2>⚡ Quick Actions</h2></div>
+        <div class="card-body">
+          <button class="quick-btn" style="background:var(--success)" onclick="memberDialog()">➕ Add Member</button>
+          <button class="quick-btn" style="background:var(--accent)" onclick="go('birthdays')">🎂 Birthdays</button>
+          <button class="quick-btn" style="background:var(--primary)" onclick="paymentDialog()">💳 New Payment</button>
+          <button class="quick-btn" style="background:var(--info)" onclick="go('broadcast')">📢 Broadcast</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>📊 Today's Summary</h2></div>
+        <div class="card-body">
+          <div class="kv"><span>Revenue</span><b style="color:var(--success)">${money(todayRev)}</b></div>
+          <div class="kv"><span>Transactions</span><b>${todayPays.length}</b></div>
+          <div class="kv"><span>Check-ins today</span><b>${DB.logs.filter(l=>l.action.startsWith("Check-in")&&iso(l.created_at)===iso(TODAY)).length}</b></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  return html;
+}
+
+/* ---------- MEMBERS ---------- */
+function pageMembers(){
+  let list=DB.members;
+  if(SEARCH)list=list.filter(m=>(m.full_name+" "+m.phone_number+" "+m.gym_plan).toLowerCase().includes(SEARCH));
+  list=[...list].sort((a,b)=>b.id-a.id);
+  return `<div class="card">
+    <div class="card-head">
+      <h2>👥 All Members <span class="li-sub">(${list.length})</span></h2>
+      <button class="btn btn-primary" onclick="memberDialog()">+ Add Member</button>
+    </div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Name</th><th>Phone</th><th>Plan</th><th>End Date</th><th>Fee</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${list.length?list.map(m=>{const s=memberStatus(m);return `
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:32px;height:32px;font-size:13px">${m.full_name[0]}</div><b>${m.full_name}</b></div></td>
+          <td>${m.phone_number}</td>
+          <td>${m.gym_plan}</td>
+          <td>${fmtDate(m.end_date)}</td>
+          <td>${money(m.gym_fee_paid)}</td>
+          <td><span class="badge ${s.cls}">${s.label}</span></td>
+          <td><div class="row-actions">
+            <button class="icon-btn" title="WhatsApp" onclick="waMember(${m.id})">💬</button>
+            <button class="icon-btn" title="Edit" onclick="memberDialog(${m.id})">✏️</button>
+            <button class="icon-btn" title="Delete" onclick="delMember(${m.id})">🗑️</button>
+          </div></td>
+        </tr>`}).join(""):`<tr><td colspan="7"><div class="empty"><div class="big">🤷</div>No members found</div></td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* ---------- PAYMENTS ---------- */
+function pagePayments(){
+  let list=[...DB.payments].sort((a,b)=>new Date(b.paid_at)-new Date(a.paid_at));
+  if(SEARCH)list=list.filter(p=>(p.member_name+" "+p.payment_type+" "+p.receipt_number).toLowerCase().includes(SEARCH));
+  const total=DB.payments.reduce((s,p)=>s+p.amount,0);
+  return `<div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">💳</div><div class="stat-value">${DB.payments.length}</div><div class="stat-label">Total Payments</div></div>
+    <div class="stat-card"><div class="stat-icon">💵</div><div class="stat-value" style="color:var(--success)">${money(total)}</div><div class="stat-label">Total Collected</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>💳 Payment History <span class="li-sub">(${list.length})</span></h2><button class="btn btn-primary" onclick="paymentDialog()">+ New Payment</button></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Receipt</th><th>Member</th><th>Type</th><th>Amount</th><th>Date</th><th></th></tr></thead>
+      <tbody>${list.length?list.slice(0,200).map(p=>`
+        <tr>
+          <td><span class="badge badge-muted">${p.receipt_number||"—"}</span></td>
+          <td><b>${p.member_name||"—"}</b></td>
+          <td><span class="badge ${p.payment_type==='Membership'?'badge-success':p.payment_type==='Renewal'?'badge-info':'badge-warning'}">${p.payment_type}</span></td>
+          <td style="color:var(--success);font-weight:700">+${money(p.amount)}</td>
+          <td>${fmtDate(p.paid_at)}</td>
+          <td><button class="icon-btn" onclick="delPayment(${p.id})">🗑️</button></td>
+        </tr>`).join(""):`<tr><td colspan="6"><div class="empty"><div class="big">💳</div>No payments</div></td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* ---------- ALERTS ---------- */
+function pageAlerts(){
+  const expired=DB.members.filter(m=>memberStatus(m).label==="Expired");
+  const expiring=DB.members.filter(m=>memberStatus(m).label==="Expiring");
+  function card(title,arr,cls){return `<div class="card">
+    <div class="card-head"><h2>${title} <span class="li-sub">(${arr.length})</span></h2></div>
+    <div>${arr.length?arr.map(m=>`
+      <div class="list-item">
+        <div class="li-left"><div class="avatar">${m.full_name[0]}</div>
+          <div><div class="li-title">${m.full_name}</div><div class="li-sub">${m.gym_plan} · ends ${fmtDate(m.end_date)} · ${daysBetween(TODAY,m.end_date)} day(s)</div></div></div>
+        <div class="row-actions">
+          <span class="badge ${cls}">${memberStatus(m).label}</span>
+          <button class="btn btn-ghost btn-sm" onclick="waExpiry(${m.id})">💬 Remind</button>
+          <button class="btn btn-success btn-sm" onclick="renewMember(${m.id})">↻ Renew</button>
+        </div>
+      </div>`).join(""):`<div class="empty"><div class="big">✅</div>All clear here!</div>`}</div>
+  </div>`}
+  return card("⚠️ Expired Memberships",expired,"badge-danger")+card("⏰ Expiring This Week",expiring,"badge-warning");
+}
+
+/* ---------- BIRTHDAYS ---------- */
+function pageBirthdays(){
+  const upcoming=DB.members.map(m=>({m,d:daysToBirthday(m.date_of_birth)})).filter(x=>x.d<=30).sort((a,b)=>a.d-b.d);
+  return `<div class="card">
+    <div class="card-head"><h2>🎂 Upcoming Birthdays (next 30 days)</h2></div>
+    <div>${upcoming.length?upcoming.map(({m,d})=>`
+      <div class="list-item">
+        <div class="li-left"><div class="li-icon">🎂</div>
+          <div><div class="li-title">${m.full_name}</div><div class="li-sub">${fmtDate(m.date_of_birth)} · turning ${age(m.date_of_birth)+ (d===0?0:1)} ${d===0?'🎉 TODAY':'in '+d+' day(s)'}</div></div></div>
+        <button class="btn btn-primary btn-sm" onclick="waBirthday(${m.id})">💬 Send Wish</button>
+      </div>`).join(""):`<div class="empty"><div class="big">🎈</div>No birthdays coming up</div>`}</div>
+  </div>`;
+}
+
+/* ---------- BROADCAST ---------- */
+function pageBroadcast(){
+  return `<div class="card">
+    <div class="card-head"><h2>📢 Compose Broadcast</h2></div>
+    <div class="card-body">
+      <div class="field"><label>Message (use {name} and {gym_name})</label>
+        <textarea id="bcMsg" rows="5">${DB.settings.broadcast_message}</textarea></div>
+      <div class="field"><label>Send to</label>
+        <select id="bcAudience">
+          <option value="all">All members (${DB.members.length})</option>
+          <option value="active">Active members (${DB.members.filter(m=>m.is_active).length})</option>
+          <option value="expired">Expired members (${DB.members.filter(m=>memberStatus(m).label==='Expired').length})</option>
+        </select></div>
+      <button class="btn btn-primary" onclick="runBroadcast()">📨 Open WhatsApp for each</button>
+      <p class="li-sub" style="margin-top:10px">Each recipient opens in a new WhatsApp tab with the message pre-filled.</p>
+    </div>
+  </div>
+  <div class="card"><div class="card-head"><h2>👁️ Preview Recipients</h2></div>
+    <div id="bcPreview"><div class="empty"><div class="big">📢</div>Choose an audience and preview</div></div>
+  </div>`;
+}
+
+/* ---------- CHECK-IN ---------- */
+function pageCheckin(){
+  const todays=DB.logs.filter(l=>l.action.startsWith("Check-in")&&iso(l.created_at)===iso(TODAY));
+  return `<div class="card">
+    <div class="card-head"><h2>✅ Check-In a Member</h2></div>
+    <div class="card-body">
+      <div class="field"><label>Member</label>
+        <select id="ciMember">${DB.members.filter(m=>m.is_active).map(m=>`<option value="${m.id}">${m.full_name} — ${m.gym_plan}</option>`).join("")}</select></div>
+      <button class="btn btn-success" onclick="doCheckin()">✅ Check In</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>📋 Today's Check-ins <span class="li-sub">(${todays.length})</span></h2></div>
+    <div>${todays.length?todays.slice().reverse().map(l=>`
+      <div class="list-item"><div class="li-left"><div class="li-icon">✅</div>
+        <div><div class="li-title">${l.action.replace("Check-in: ","")}</div><div class="li-sub">by ${l.employee_username} · ${new Date(l.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div></div></div></div>`).join(""):`<div class="empty"><div class="big">🚪</div>No check-ins yet today</div>`}</div>
+  </div>`;
+}
+
+/* ---------- LEAVE ---------- */
+function pageLeave(){
+  return `<div class="card">
+    <div class="card-head"><h2>🏖️ Request Leave</h2><button class="btn btn-primary" onclick="leaveDialog()">+ New Request</button></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+      <tbody>${DB.leaves.length?[...DB.leaves].reverse().map(l=>`
+        <tr><td><b>${l.employee_username}</b></td><td>${l.type}</td><td>${fmtDate(l.start_date)}</td><td>${fmtDate(l.end_date)}</td><td>${l.reason||"—"}</td>
+        <td><span class="badge ${l.status==='Approved'?'badge-success':l.status==='Rejected'?'badge-danger':'badge-warning'}">${l.status}</span></td>
+        <td><div class="row-actions">${SESSION.role==='admin'?`<button class="icon-btn" title="Approve" onclick="setLeave(${l.id},'Approved')">✔️</button><button class="icon-btn" title="Reject" onclick="setLeave(${l.id},'Rejected')">✖️</button>`:''}<button class="icon-btn" onclick="delLeave(${l.id})">🗑️</button></div></td></tr>`).join(""):`<tr><td colspan="7"><div class="empty"><div class="big">🏖️</div>No leave requests</div></td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* ---------- EXPENSES ---------- */
+function pageExpenses(){
+  let list=[...DB.expenses].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  if(SEARCH)list=list.filter(e=>(e.title+" "+e.category).toLowerCase().includes(SEARCH));
+  const monthStart=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);
+  const monthTotal=DB.expenses.filter(e=>new Date(e.created_at)>=monthStart).reduce((s,e)=>s+e.amount,0);
+  const total=DB.expenses.reduce((s,e)=>s+e.amount,0);
+  return `<div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">💸</div><div class="stat-value" style="color:var(--danger)">${money(monthTotal)}</div><div class="stat-label">This Month</div></div>
+    <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">${money(total)}</div><div class="stat-label">All-Time Total</div></div>
+    <div class="stat-card"><div class="stat-icon">🧾</div><div class="stat-value">${DB.expenses.length}</div><div class="stat-label">Records</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>💰 Expenses <span class="li-sub">(${list.length})</span></h2><button class="btn btn-primary" onclick="expenseDialog()">+ Add Expense</button></div>
+    <div>${list.length?list.slice(0,200).map(e=>{const ic=EXPENSE_ICONS[(e.category||"").toLowerCase()]||"📝";return `
+      <div class="list-item">
+        <div class="li-left"><div class="li-icon">${ic}</div>
+          <div><div class="li-title">${e.title}</div><div class="li-sub">${e.category} · ${fmtDate(e.created_at)} · by ${e.created_by}</div></div></div>
+        <div class="row-actions"><span class="expense-amount" style="color:var(--danger);font-weight:700">-${money(e.amount)}</span>
+          <button class="icon-btn" onclick="expenseDialog(${e.id})">✏️</button>
+          <button class="icon-btn" onclick="delExpense(${e.id})">🗑️</button></div>
+      </div>`}).join(""):`<div class="empty"><div class="big">💸</div>No expenses</div>`}</div>
+  </div>`;
+}
+
+/* ---------- MAINTENANCE ---------- */
+function pageMaintenance(){
+  return `<div class="card">
+    <div class="card-head"><h2>🔧 Maintenance Tasks</h2><button class="btn btn-primary" onclick="maintDialog()">+ New Task</button></div>
+    <div>${DB.maintenance.length?[...DB.maintenance].reverse().map(t=>`
+      <div class="list-item">
+        <div class="li-left"><div class="li-icon">${t.status==='Done'?'✅':t.status==='In Progress'?'🛠️':'🔧'}</div>
+          <div><div class="li-title">${t.title}</div><div class="li-sub">${t.description||""} · by ${t.created_by} · ${fmtDate(t.created_at)}</div></div></div>
+        <div class="row-actions">
+          <span class="badge ${t.priority==='High'?'badge-danger':t.priority==='Medium'?'badge-warning':'badge-muted'}">${t.priority}</span>
+          <span class="badge ${t.status==='Done'?'badge-success':t.status==='In Progress'?'badge-info':'badge-muted'}">${t.status}</span>
+          <button class="icon-btn" title="Cycle status" onclick="cycleMaint(${t.id})">🔁</button>
+          <button class="icon-btn" onclick="delMaint(${t.id})">🗑️</button>
+        </div>
+      </div>`).join(""):`<div class="empty"><div class="big">🔧</div>No maintenance tasks</div>`}</div>
+  </div>`;
+}
+
+/* ---------- EMPLOYEES ---------- */
+function pageEmployees(){
+  let list=DB.users;
+  if(SEARCH)list=list.filter(u=>(u.full_name+" "+u.username+" "+u.role).toLowerCase().includes(SEARCH));
+  return `<div class="card">
+    <div class="card-head"><h2>👔 Staff <span class="li-sub">(${list.length})</span></h2><button class="btn btn-primary" onclick="employeeDialog()">+ Add Employee</button></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Phone</th><th>Salary</th><th>Hired</th><th></th></tr></thead>
+      <tbody>${list.map(u=>`
+        <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:32px;height:32px;font-size:13px">${u.full_name[0]}</div><b>${u.full_name}</b></div></td>
+        <td>${u.username}</td>
+        <td><span class="badge ${u.role==='admin'?'badge-danger':'badge-info'}">${u.role}</span></td>
+        <td>${u.phone||"—"}</td><td>${u.salary?money(u.salary):"—"}</td><td>${fmtDate(u.hire_date)}</td>
+        <td><div class="row-actions"><button class="icon-btn" onclick="employeeDialog(${u.id})">✏️</button>${u.username!=='admin'?`<button class="icon-btn" onclick="delEmployee(${u.id})">🗑️</button>`:''}</div></td></tr>`).join("")}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* ---------- ACTIVITY TRACKER ---------- */
+function pageActivity(){
+  return `<div class="card">
+    <div class="card-head"><h2>👁️ Member Activities <span class="li-sub">(${DB.memberActivities.length})</span></h2><button class="btn btn-primary" onclick="activityDialog()">+ Enroll</button></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Member</th><th>Activity</th><th>Fee</th><th>Paid</th><th>Enrolled</th><th></th></tr></thead>
+      <tbody>${DB.memberActivities.length?[...DB.memberActivities].reverse().map(a=>`
+        <tr><td><b>${a.member_name}</b></td><td>${a.activity_type}</td><td>${money(a.fee)}</td>
+        <td><span class="badge ${a.is_paid?'badge-success':'badge-warning'}">${a.is_paid?'Paid':'Unpaid'}</span></td>
+        <td>${fmtDate(a.enrolled_at)}</td>
+        <td><button class="icon-btn" onclick="delActivity(${a.id})">🗑️</button></td></tr>`).join(""):`<tr><td colspan="6"><div class="empty"><div class="big">👁️</div>No activities</div></td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* ---------- PRODUCTS ---------- */
+function pageProducts(){
+  let list=DB.products;
+  if(SEARCH)list=list.filter(p=>(p.name+" "+p.category).toLowerCase().includes(SEARCH));
+  return `<div class="card">
+    <div class="card-head"><h2>📦 Products & Inventory <span class="li-sub">(${list.length})</span></h2><button class="btn btn-primary" onclick="productDialog()">+ Add Product</button></div>
+    <div class="card-body"><div class="product-grid">${list.map(p=>{const ic=PRODUCT_ICONS[p.category]||"📦";return `
+      <div class="product-card">
+        <div class="product-icon">${ic}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-cat">${p.category}</div>
+        <div class="product-price">${money(p.price)}</div>
+        <div class="product-stock">Stock: ${p.stock} ${p.stock<=10?'<span class="badge badge-danger" style="margin-left:4px">Low</span>':''}</div>
+        <div class="product-actions">
+          <button class="icon-btn" onclick="productDialog(${p.id})">✏️</button>
+          <button class="icon-btn" onclick="delProduct(${p.id})">🗑️</button>
+        </div>
+      </div>`}).join("")||`<div class="empty"><div class="big">📦</div>No products</div>`}</div></div>
+  </div>`;
+}
+
+/* ---------- FINANCE ---------- */
+function pageFinance(){
+  const revenue=DB.payments.reduce((s,p)=>s+p.amount,0);
+  const expenses=DB.expenses.reduce((s,e)=>s+e.amount,0);
+  const profit=revenue-expenses;
+  // by category
+  const byCat={};DB.expenses.forEach(e=>byCat[e.category]=(byCat[e.category]||0)+e.amount);
+  const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxCat=Math.max(...cats.map(c=>c[1]),1);
+  // last 6 months revenue
+  const months=[];
+  for(let i=5;i>=0;i--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-i,1);const next=new Date(TODAY.getFullYear(),TODAY.getMonth()-i+1,1);
+    const r=DB.payments.filter(p=>new Date(p.paid_at)>=d&&new Date(p.paid_at)<next).reduce((s,p)=>s+p.amount,0);
+    const x=DB.expenses.filter(e=>new Date(e.created_at)>=d&&new Date(e.created_at)<next).reduce((s,e)=>s+e.amount,0);
+    months.push({label:d.toLocaleDateString('en',{month:'short'}),r,x})}
+  const maxM=Math.max(...months.flatMap(m=>[m.r,m.x]),1);
+  return `<div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" style="color:var(--success)">${money(revenue)}</div><div class="stat-label">Total Revenue</div></div>
+    <div class="stat-card"><div class="stat-icon">💸</div><div class="stat-value" style="color:var(--danger)">${money(expenses)}</div><div class="stat-label">Total Expenses</div></div>
+    <div class="stat-card"><div class="stat-icon">${profit>=0?'📈':'📉'}</div><div class="stat-value" style="color:${profit>=0?'var(--success)':'var(--danger)'}">${money(profit)}</div><div class="stat-label">Net Profit</div></div>
+    <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">${revenue?Math.round(profit/revenue*100):0}%</div><div class="stat-label">Profit Margin</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-head"><h2>📅 Last 6 Months</h2></div><div class="card-body">
+      ${months.map(m=>`<div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><b>${m.label}</b><span><span style="color:var(--success)">${money(m.r)}</span> / <span style="color:var(--danger)">${money(m.x)}</span></span></div>
+        <div class="bar-track" style="margin-bottom:4px"><div class="bar-fill" style="width:${m.r/maxM*100}%;background:var(--success)"></div></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${m.x/maxM*100}%;background:var(--danger)"></div></div>
+      </div>`).join("")}
+    </div></div>
+    <div class="card"><div class="card-head"><h2>🧾 Expenses by Category</h2></div><div class="card-body">
+      ${cats.map(([c,v])=>`<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>${EXPENSE_ICONS[c.toLowerCase()]||'📝'} ${c}</span><b>${money(v)}</b></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${v/maxCat*100}%;background:var(--primary)"></div></div>
+      </div>`).join("")}
+    </div></div>
+  </div>`;
+}
+
+/* ---------- REPORTS ---------- */
+function pageReports(){
+  const planCount={};DB.members.forEach(m=>planCount[m.gym_plan]=(planCount[m.gym_plan]||0)+1);
+  const plans=Object.entries(planCount).sort((a,b)=>b[1]-a[1]);
+  const maxP=Math.max(...plans.map(p=>p[1]),1);
+  const active=DB.members.filter(m=>m.is_active).length;
+  const total=DB.members.length;
+  const revenue=DB.payments.reduce((s,p)=>s+p.amount,0);
+  const avgFee=DB.members.length?revenue/DB.members.length:0;
+  const typeCount={};DB.payments.forEach(p=>typeCount[p.payment_type]=(typeCount[p.payment_type]||0)+p.amount);
+  const types=Object.entries(typeCount).sort((a,b)=>b[1]-a[1]);
+  const maxT=Math.max(...types.map(t=>t[1]),1);
+  return `<div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">${total}</div><div class="stat-label">Total Members</div></div>
+    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" style="color:var(--success)">${active}</div><div class="stat-label">Active</div></div>
+    <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value">${DB.products.reduce((s,p)=>s+p.stock,0)}</div><div class="stat-label">Items in Stock</div></div>
+    <div class="stat-card"><div class="stat-icon">💵</div><div class="stat-value">${money(avgFee)}</div><div class="stat-label">Avg Revenue / Member</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-head"><h2>📊 Members by Plan</h2></div><div class="card-body">
+      ${plans.map(([p,c])=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>${p}</span><b>${c}</b></div><div class="bar-track"><div class="bar-fill" style="width:${c/maxP*100}%;background:var(--primary)"></div></div></div>`).join("")}
+    </div></div>
+    <div class="card"><div class="card-head"><h2>💳 Revenue by Type</h2></div><div class="card-body">
+      ${types.map(([t,v])=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>${t}</span><b>${money(v)}</b></div><div class="bar-track"><div class="bar-fill" style="width:${v/maxT*100}%;background:var(--success)"></div></div></div>`).join("")}
+    </div></div>
+  </div>`;
+}
+
+/* ---------- SETTINGS ---------- */
+function pageSettings(){
+  const s=DB.settings;
+  return `<div class="card"><div class="card-head"><h2>🏢 General</h2></div><div class="card-body">
+    <div class="field-row">
+      <div class="field"><label>Gym Name</label><input id="setName" value="${s.gym_name}"></div>
+      <div class="field"><label>Currency</label><input id="setCur" value="${s.currency}"></div>
+    </div>
+    <div class="field"><label>Default Country Code (no +)</label><input id="setCC" value="${s.country_code}"></div>
+  </div></div>
+  <div class="card"><div class="card-head"><h2>💬 WhatsApp Templates</h2></div><div class="card-body">
+    <div class="field"><label>Birthday Message <span class="li-sub">{name} {age} {gym_name}</span></label><textarea id="setBday" rows="4">${s.birthday_message}</textarea></div>
+    <div class="field"><label>Expiry Message <span class="li-sub">{name} {plan} {date} {days} {gym_name}</span></label><textarea id="setExp" rows="4">${s.expiry_message}</textarea></div>
+    <div class="field"><label>Broadcast Message <span class="li-sub">{name} {gym_name}</span></label><textarea id="setBc" rows="4">${s.broadcast_message}</textarea></div>
+  </div></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+    <button class="btn btn-ghost" onclick="exportData()">⬇️ Export Data (JSON)</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">⬆️ Import Data</button>
+    <button class="btn btn-danger" onclick="resetDB()">↺ Reset to Demo Data</button>
+    <input type="file" id="importFile" accept="application/json" class="hidden" onchange="importData(event)">
+  </div>`;
+}
+
+/* ---------- LOGS ---------- */
+function pageLogs(){
+  let list=[...DB.logs].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  if(SEARCH)list=list.filter(l=>(l.action+" "+l.employee_username).toLowerCase().includes(SEARCH));
+  return `<div class="card">
+    <div class="card-head"><h2>📜 Audit Logs <span class="li-sub">(${list.length})</span></h2><button class="btn btn-ghost btn-sm" onclick="clearLogs()">Clear</button></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>When</th><th>User</th><th>Action</th></tr></thead>
+      <tbody>${list.slice(0,300).map(l=>`<tr><td class="li-sub">${new Date(l.created_at).toLocaleString()}</td><td><b>${l.employee_username}</b></td><td>${l.action}</td></tr>`).join("")||`<tr><td colspan="3"><div class="empty">No logs</div></td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* =========================================================================
+   MODALS & FORMS
+   ========================================================================= */
+function modal(title,bodyHTML,onSave,saveLabel="Save"){
+  const ov=document.createElement("div");ov.className="modal-overlay";
+  ov.innerHTML=`<div class="modal">
+    <div class="modal-head"><h3>${title}</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body">${bodyHTML}</div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-cancel>Cancel</button>${onSave?`<button class="btn btn-primary" data-save>${saveLabel}</button>`:""}</div>
+  </div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.querySelector(".modal-close").onclick=close;
+  ov.querySelector("[data-cancel]").onclick=close;
+  ov.addEventListener("mousedown",e=>{if(e.target===ov)close()});
+  if(onSave)ov.querySelector("[data-save]").onclick=()=>{if(onSave(ov)!==false)close()};
+  const first=ov.querySelector("input,select,textarea");if(first)setTimeout(()=>first.focus(),50);
+  return ov;
+}
+const val=(ov,id)=>ov.querySelector("#"+id).value.trim();
+const numVal=(ov,id)=>parseFloat(ov.querySelector("#"+id).value)||0;
+
+function planOptions(sel){return PLAN_NAMES.map(p=>`<option ${p===sel?'selected':''}>${p}</option>`).join("")}
+
+function memberDialog(id){
+  const m=id?DB.members.find(x=>x.id===id):{full_name:"",phone_number:"+212",date_of_birth:"",start_date:iso(TODAY),end_date:iso(addDays(TODAY,30)),gym_plan:"Monthly",gym_fee_paid:300,is_active:true};
+  const body=`
+    <div class="field"><label>Full Name *</label><input id="mName" value="${m.full_name||""}"></div>
+    <div class="field-row">
+      <div class="field"><label>Phone *</label><input id="mPhone" value="${m.phone_number||""}"></div>
+      <div class="field"><label>Date of Birth</label><input id="mDob" type="date" value="${m.date_of_birth||""}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Plan</label><select id="mPlan">${planOptions(m.gym_plan)}</select></div>
+      <div class="field"><label>Fee Paid (${cur()})</label><input id="mFee" type="number" value="${m.gym_fee_paid||0}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Start Date</label><input id="mStart" type="date" value="${m.start_date||iso(TODAY)}"></div>
+      <div class="field"><label>End Date</label><input id="mEnd" type="date" value="${m.end_date||iso(addDays(TODAY,30))}"></div>
+    </div>
+    <div class="field"><label><input type="checkbox" id="mActive" ${m.is_active?'checked':''}> Active membership</label></div>`;
+  modal(id?"Edit Member":"Add Member",body,ov=>{
+    const name=val(ov,"mName");if(!name){toast("Name is required","danger");return false}
+    const data={full_name:name,phone_number:val(ov,"mPhone"),date_of_birth:val(ov,"mDob"),gym_plan:val(ov,"mPlan"),gym_fee_paid:numVal(ov,"mFee"),start_date:val(ov,"mStart"),end_date:val(ov,"mEnd"),is_active:ov.querySelector("#mActive").checked};
+    if(id){Object.assign(m,data);log("Updated member: "+name);toast("Member updated","success")}
+    else{const nm={id:nextId("members"),...data,support_phone_number:"",created_at:isoT(new Date())};DB.members.push(nm);
+      // auto-payment record
+      if(nm.gym_fee_paid>0){DB.payments.push({id:nextId("payments"),member_id:nm.id,member_name:nm.full_name,amount:nm.gym_fee_paid,payment_type:"Membership",description:nm.gym_plan+" membership",receipt_number:"RCP-"+String(nextId("logs")).padStart(4,"0"),paid_at:isoT(new Date())})}
+      log("Added member: "+name);toast("Member added","success")}
+    saveDB();render();
+  });
+}
+function delMember(id){const m=DB.members.find(x=>x.id===id);if(confirm(`Delete ${m.full_name}?`)){DB.members=DB.members.filter(x=>x.id!==id);log("Deleted member: "+m.full_name);saveDB();toast("Member deleted","danger");render()}}
+function renewMember(id){const m=DB.members.find(x=>x.id===id);const dur={Daily:1,Weekly:7,Monthly:30,Quarterly:90,"Half-Year":180,Yearly:365,Student:30,VIP:30}[m.gym_plan]||30;m.start_date=iso(TODAY);m.end_date=iso(addDays(TODAY,dur));m.is_active=true;
+  DB.payments.push({id:nextId("payments"),member_id:m.id,member_name:m.full_name,amount:m.gym_fee_paid,payment_type:"Renewal",description:"Membership renewal",receipt_number:"RCP-"+String(nextId("logs")).padStart(4,"0"),paid_at:isoT(new Date())});
+  log("Renewed member: "+m.full_name);saveDB();toast("Membership renewed","success");render()}
+
+function paymentDialog(){
+  const body=`
+    <div class="field"><label>Member</label><select id="pMember"><option value="">— Walk-in / None —</option>${DB.members.map(m=>`<option value="${m.id}">${m.full_name}</option>`).join("")}</select></div>
+    <div class="field-row">
+      <div class="field"><label>Type</label><select id="pType"><option>Membership</option><option>Renewal</option><option>Product Sale</option><option>Day Pass</option><option>Activity</option><option>Other</option></select></div>
+      <div class="field"><label>Amount (${cur()})</label><input id="pAmount" type="number" value="0"></div>
+    </div>
+    <div class="field"><label>Description</label><input id="pDesc" placeholder="Optional note"></div>`;
+  modal("New Payment",body,ov=>{
+    const amt=numVal(ov,"pAmount");if(amt<=0){toast("Enter an amount","danger");return false}
+    const mid=ov.querySelector("#pMember").value;const m=mid?DB.members.find(x=>x.id==mid):null;
+    DB.payments.push({id:nextId("payments"),member_id:m?m.id:null,member_name:m?m.full_name:"Walk-in",amount:amt,payment_type:val(ov,"pType"),description:val(ov,"pDesc"),receipt_number:"RCP-"+String(nextId("logs")).padStart(4,"0"),paid_at:isoT(new Date())});
+    log("Recorded payment: "+money(amt));saveDB();toast("Payment recorded","success");render();
+  });
+}
+function delPayment(id){if(confirm("Delete this payment?")){DB.payments=DB.payments.filter(x=>x.id!==id);saveDB();toast("Payment deleted","danger");render()}}
+
+function expenseDialog(id){
+  const e=id?DB.expenses.find(x=>x.id===id):{title:"",category:"Electricity",amount:0,description:""};
+  const body=`
+    <div class="field"><label>Title *</label><input id="eTitle" value="${e.title||""}"></div>
+    <div class="field-row">
+      <div class="field"><label>Category</label><select id="eCat">${EXPENSE_CATEGORIES.map(c=>`<option ${c===e.category?'selected':''}>${c}</option>`).join("")}</select></div>
+      <div class="field"><label>Amount (${cur()})</label><input id="eAmount" type="number" value="${e.amount||0}"></div>
+    </div>
+    <div class="field"><label>Description</label><textarea id="eDesc" rows="2">${e.description||""}</textarea></div>`;
+  modal(id?"Edit Expense":"Add Expense",body,ov=>{
+    const t=val(ov,"eTitle");if(!t){toast("Title required","danger");return false}
+    const data={title:t,category:val(ov,"eCat"),amount:numVal(ov,"eAmount"),description:val(ov,"eDesc")};
+    if(id){Object.assign(e,data);toast("Expense updated","success")}
+    else{DB.expenses.push({id:nextId("expenses"),...data,receipt_number:"EXP-"+String(nextId("logs")).padStart(4,"0"),created_by:SESSION.username,created_at:isoT(new Date())});log("Added expense: "+t);toast("Expense added","success")}
+    saveDB();render();
+  });
+}
+function delExpense(id){if(confirm("Delete this expense?")){DB.expenses=DB.expenses.filter(x=>x.id!==id);saveDB();toast("Expense deleted","danger");render()}}
+
+function productDialog(id){
+  const p=id?DB.products.find(x=>x.id===id):{name:"",category:"nutrition",price:0,stock:0,is_available:true};
+  const body=`
+    <div class="field"><label>Name *</label><input id="prName" value="${p.name||""}"></div>
+    <div class="field-row">
+      <div class="field"><label>Category</label><select id="prCat">${PRODUCT_CATEGORIES.map(c=>`<option ${c===p.category?'selected':''}>${c}</option>`).join("")}</select></div>
+      <div class="field"><label>Price (${cur()})</label><input id="prPrice" type="number" step="0.5" value="${p.price||0}"></div>
+    </div>
+    <div class="field"><label>Stock</label><input id="prStock" type="number" value="${p.stock||0}"></div>`;
+  modal(id?"Edit Product":"Add Product",body,ov=>{
+    const n=val(ov,"prName");if(!n){toast("Name required","danger");return false}
+    const data={name:n,category:val(ov,"prCat"),price:numVal(ov,"prPrice"),stock:parseInt(ov.querySelector("#prStock").value)||0,is_available:true};
+    if(id){Object.assign(p,data);toast("Product updated","success")}
+    else{DB.products.push({id:nextId("products"),...data});log("Added product: "+n);toast("Product added","success")}
+    saveDB();render();
+  });
+}
+function delProduct(id){if(confirm("Delete this product?")){DB.products=DB.products.filter(x=>x.id!==id);saveDB();toast("Product deleted","danger");render()}}
+
+function employeeDialog(id){
+  const u=id?DB.users.find(x=>x.id===id):{full_name:"",username:"",password:"",role:"employee",salary:0,working_days:6,phone:"+212",hire_date:iso(TODAY),is_active:true};
+  const body=`
+    <div class="field-row">
+      <div class="field"><label>Full Name *</label><input id="uName" value="${u.full_name||""}"></div>
+      <div class="field"><label>Username *</label><input id="uUser" value="${u.username||""}" ${id?'disabled':''}></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Password ${id?'(leave blank to keep)':'*'}</label><input id="uPass" value=""></div>
+      <div class="field"><label>Role</label><select id="uRole"><option value="employee" ${u.role==='employee'?'selected':''}>employee</option><option value="admin" ${u.role==='admin'?'selected':''}>admin</option></select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Phone</label><input id="uPhone" value="${u.phone||""}"></div>
+      <div class="field"><label>Salary (${cur()})</label><input id="uSalary" type="number" value="${u.salary||0}"></div>
+    </div>
+    <div class="field"><label>Hire Date</label><input id="uHire" type="date" value="${u.hire_date||iso(TODAY)}"></div>`;
+  modal(id?"Edit Employee":"Add Employee",body,ov=>{
+    const n=val(ov,"uName"),un=val(ov,"uUser");if(!n||!un){toast("Name & username required","danger");return false}
+    const data={full_name:n,role:val(ov,"uRole"),phone:val(ov,"uPhone"),salary:numVal(ov,"uSalary"),hire_date:val(ov,"uHire")};
+    const pw=val(ov,"uPass");
+    if(id){Object.assign(u,data);if(pw)u.password=pw;toast("Employee updated","success")}
+    else{if(DB.users.some(x=>x.username===un)){toast("Username taken","danger");return false}
+      DB.users.push({id:nextId("users"),username:un,password:pw||"changeme",working_days:6,address:"",notes:"",is_active:true,...data});log("Added employee: "+n);toast("Employee added","success")}
+    saveDB();render();
+  });
+}
+function delEmployee(id){const u=DB.users.find(x=>x.id===id);if(confirm(`Delete ${u.full_name}?`)){DB.users=DB.users.filter(x=>x.id!==id);log("Deleted employee: "+u.full_name);saveDB();toast("Employee deleted","danger");render()}}
+
+function activityDialog(){
+  const body=`
+    <div class="field"><label>Member</label><select id="aMember">${DB.members.map(m=>`<option value="${m.id}">${m.full_name}</option>`).join("")}</select></div>
+    <div class="field-row">
+      <div class="field"><label>Activity</label><select id="aType">${ACTIVITIES.map(a=>`<option>${a}</option>`).join("")}</select></div>
+      <div class="field"><label>Fee (${cur()})</label><input id="aFee" type="number" value="100"></div>
+    </div>
+    <div class="field"><label><input type="checkbox" id="aPaid" checked> Paid</label></div>`;
+  modal("Enroll in Activity",body,ov=>{
+    const m=DB.members.find(x=>x.id==ov.querySelector("#aMember").value);
+    DB.memberActivities.push({id:nextId("memberActivities"),member_id:m.id,member_name:m.full_name,activity_type:val(ov,"aType"),fee:numVal(ov,"aFee"),is_paid:ov.querySelector("#aPaid").checked,enrolled_at:isoT(new Date())});
+    log("Enrolled "+m.full_name+" in activity");saveDB();toast("Enrolled","success");render();
+  });
+}
+function delActivity(id){if(confirm("Delete this enrollment?")){DB.memberActivities=DB.memberActivities.filter(x=>x.id!==id);saveDB();toast("Removed","danger");render()}}
+
+function leaveDialog(){
+  const staff=DB.users;
+  const body=`
+    <div class="field"><label>Employee</label><select id="lEmp">${staff.map(u=>`<option value="${u.username}" ${u.username===SESSION.username?'selected':''}>${u.full_name} (${u.username})</option>`).join("")}</select></div>
+    <div class="field"><label>Type</label><select id="lType"><option>Vacation</option><option>Sick Leave</option><option>Personal</option><option>Unpaid</option></select></div>
+    <div class="field-row">
+      <div class="field"><label>From</label><input id="lFrom2" type="date" value="${iso(TODAY)}"></div>
+      <div class="field"><label>To</label><input id="lTo" type="date" value="${iso(addDays(TODAY,1))}"></div>
+    </div>
+    <div class="field"><label>Reason</label><input id="lReason" placeholder="Optional"></div>`;
+  modal("Request Leave",body,ov=>{
+    DB.leaves.push({id:nextId("leaves"),employee_username:ov.querySelector("#lEmp").value,type:val(ov,"lType"),start_date:val(ov,"lFrom2"),end_date:val(ov,"lTo"),reason:val(ov,"lReason"),status:"Pending",created_at:isoT(new Date())});
+    log("Leave request submitted");saveDB();toast("Request submitted","success");render();
+  });
+}
+function setLeave(id,status){const l=DB.leaves.find(x=>x.id===id);l.status=status;log("Leave "+status.toLowerCase()+": "+l.employee_username);saveDB();toast("Leave "+status,"success");render()}
+function delLeave(id){if(confirm("Delete this request?")){DB.leaves=DB.leaves.filter(x=>x.id!==id);saveDB();toast("Deleted","danger");render()}}
+
+function maintDialog(){
+  const body=`
+    <div class="field"><label>Title *</label><input id="tTitle"></div>
+    <div class="field"><label>Description</label><textarea id="tDesc" rows="2"></textarea></div>
+    <div class="field"><label>Priority</label><select id="tPrio"><option>Low</option><option selected>Medium</option><option>High</option></select></div>`;
+  modal("New Maintenance Task",body,ov=>{
+    const t=val(ov,"tTitle");if(!t){toast("Title required","danger");return false}
+    DB.maintenance.push({id:nextId("maintenance"),title:t,description:val(ov,"tDesc"),priority:val(ov,"tPrio"),status:"Open",created_by:SESSION.username,created_at:isoT(new Date())});
+    log("Added maintenance task: "+t);saveDB();toast("Task added","success");render();
+  });
+}
+function cycleMaint(id){const t=DB.maintenance.find(x=>x.id===id);const order=["Open","In Progress","Done"];t.status=order[(order.indexOf(t.status)+1)%3];saveDB();render()}
+function delMaint(id){if(confirm("Delete this task?")){DB.maintenance=DB.maintenance.filter(x=>x.id!==id);saveDB();toast("Deleted","danger");render()}}
+
+function doCheckin(){const id=document.getElementById("ciMember").value;const m=DB.members.find(x=>x.id==id);if(!m)return;log("Check-in: "+m.full_name);saveDB();toast("✅ "+m.full_name+" checked in","success");render()}
+
+/* =========================================================================
+   WHATSAPP
+   ========================================================================= */
+function waUrl(phone,text){const num=(phone||"").replace(/[^\d]/g,"");return `https://wa.me/${num}?text=${encodeURIComponent(text)}`}
+function tpl(str,map){return str.replace(/\{(\w+)\}/g,(_,k)=>k in map?map[k]:"{"+k+"}")}
+function waMember(id){const m=DB.members.find(x=>x.id===id);window.open(waUrl(m.phone_number,`Hello ${m.full_name}! 👋`),"_blank");log("WhatsApp to "+m.full_name)}
+function waBirthday(id){const m=DB.members.find(x=>x.id===id);const msg=tpl(DB.settings.birthday_message,{name:m.full_name,age:age(m.date_of_birth)+1,gym_name:DB.settings.gym_name});window.open(waUrl(m.phone_number,msg),"_blank");log("Birthday wish to "+m.full_name)}
+function waExpiry(id){const m=DB.members.find(x=>x.id===id);const msg=tpl(DB.settings.expiry_message,{name:m.full_name,plan:m.gym_plan,date:fmtDate(m.end_date),days:daysBetween(TODAY,m.end_date),gym_name:DB.settings.gym_name});window.open(waUrl(m.phone_number,msg),"_blank");log("Expiry reminder to "+m.full_name)}
+function runBroadcast(){
+  const msg=document.getElementById("bcMsg").value;const aud=document.getElementById("bcAudience").value;
+  let list=DB.members;
+  if(aud==="active")list=list.filter(m=>m.is_active);
+  if(aud==="expired")list=list.filter(m=>memberStatus(m).label==="Expired");
+  if(!list.length){toast("No recipients","danger");return}
+  if(!confirm(`Open WhatsApp for ${list.length} member(s)? Your browser may ask to allow multiple popups.`))return;
+  list.forEach((m,i)=>setTimeout(()=>window.open(waUrl(m.phone_number,tpl(msg,{name:m.full_name,gym_name:DB.settings.gym_name})),"_blank"),i*400));
+  log("Broadcast to "+list.length+" members");toast("Opening WhatsApp…","success");
+}
+function previewBroadcast(){
+  const aud=document.getElementById("bcAudience").value;
+  let list=DB.members;
+  if(aud==="active")list=list.filter(m=>m.is_active);
+  if(aud==="expired")list=list.filter(m=>memberStatus(m).label==="Expired");
+  document.getElementById("bcPreview").innerHTML=list.map(m=>`<div class="list-item"><div class="li-left"><div class="avatar">${m.full_name[0]}</div><div><div class="li-title">${m.full_name}</div><div class="li-sub">${m.phone_number}</div></div></div></div>`).join("")||`<div class="empty">No recipients</div>`;
+}
+
+/* =========================================================================
+   SETTINGS ACTIONS
+   ========================================================================= */
+function saveSettings(){
+  Object.assign(DB.settings,{
+    gym_name:document.getElementById("setName").value.trim()||"Gym Platform",
+    currency:document.getElementById("setCur").value.trim()||CURRENCY_DEFAULT,
+    country_code:document.getElementById("setCC").value.trim()||"212",
+    birthday_message:document.getElementById("setBday").value,
+    expiry_message:document.getElementById("setExp").value,
+    broadcast_message:document.getElementById("setBc").value,
+  });
+  saveDB();document.getElementById("brandName").textContent=DB.settings.gym_name.toUpperCase();log("Updated settings");toast("Settings saved","success");
+}
+function exportData(){const blob=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="gym-platform-data.json";a.click();toast("Data exported","success")}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{DB=JSON.parse(r.result);saveDB();toast("Data imported","success");render()}catch(e){toast("Invalid file","danger")}};r.readAsText(f)}
+function clearLogs(){if(confirm("Clear all audit logs?")){DB.logs=[];saveDB();toast("Logs cleared","danger");render()}}
+
+/* =========================================================================
+   TOAST
+   ========================================================================= */
+function toast(msg,type=""){const t=document.createElement("div");t.className="toast "+type;t.textContent=msg;document.getElementById("toasts").appendChild(t);setTimeout(()=>{t.style.opacity="0";t.style.transition="opacity .3s";setTimeout(()=>t.remove(),300)},2600)}
+
+/* =========================================================================
+   AUTH
+   ========================================================================= */
+function shakeCard(){const c=document.getElementById("loginCard");if(!c)return;c.classList.remove("shake");void c.offsetWidth;c.classList.add("shake")}
+function doLogin(){
+  const u=document.getElementById("loginUser").value.trim();
+  const p=document.getElementById("loginPass").value;
+  const err=document.getElementById("loginError");
+  if(!u||!p){err.textContent="⚠️ Please enter username and password";shakeCard();return}
+  const user=DB.users.find(x=>x.username===u&&x.password===p&&x.is_active);
+  if(!user){err.textContent="⚠️ Invalid username or password";shakeCard();return}
+  SESSION={id:user.id,username:user.username,full_name:user.full_name,role:user.role};
+  if(document.getElementById("rememberMe").checked)localStorage.setItem("gym_session",JSON.stringify(SESSION));
+  log("Logged in");saveDB();
+  err.style.color="var(--success)";err.textContent="✓ Welcome back!";
+  const lg=document.getElementById("login");
+  lg.classList.add("fade-out");
+  setTimeout(()=>{lg.classList.add("hidden");lg.classList.remove("fade-out");err.style.color="";err.textContent="";enterApp();},520);
+}
+function doLogout(){localStorage.removeItem("gym_session");SESSION=null;document.getElementById("app").classList.add("hidden");document.getElementById("login").classList.remove("hidden");document.getElementById("loginPass").value="";document.getElementById("loginError").textContent=""}
+function enterApp(){
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("brandName").textContent=(DB.settings.gym_name||"Gym Platform").toUpperCase();
+  document.getElementById("userAvatar").textContent=SESSION.full_name[0];
+  document.getElementById("userNameLbl").textContent=SESSION.full_name;
+  document.getElementById("userRoleLbl").textContent=SESSION.role;
+  try{if(window.innerWidth>820&&localStorage.getItem("gym_sidebar")==="1")document.getElementById("sidebar").classList.add("collapsed")}catch(e){}
+  go("dashboard");
+}
+
+/* broadcast audience preview hookup (event delegation) */
+document.addEventListener("change",e=>{if(e.target&&e.target.id==="bcAudience")previewBroadcast()});
+
+/* enter-to-login */
+document.getElementById("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
+document.getElementById("loginUser").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("loginPass").focus()});
+
+/* =========================================================================
+   STARTUP
+   ========================================================================= */
+function spawnParticles(){
+  const wrap=document.getElementById("particles");if(!wrap)return;
+  const icons=["🏋️","💪","🔥","⚡","🏆","🥇","🤸","💥"];
+  for(let i=0;i<20;i++){const s=document.createElement("i");
+    s.textContent=icons[i%icons.length];
+    s.style.left=(Math.random()*100)+"%";
+    s.style.fontSize=(12+Math.random()*22)+"px";
+    s.style.animationDuration=(7+Math.random()*9)+"s";
+    s.style.animationDelay=(Math.random()*7)+"s";
+    wrap.appendChild(s);}
+}
+function bootSplash(){
+  spawnParticles();
+  const steps=["Warming up the engine…","Racking the weights…","Counting reps & members…","Calibrating the scoreboard…","Ready to train! 💪"];
+  let i=0;const fill=document.getElementById("splashFill"),status=document.getElementById("splashStatus");
+  const t=setInterval(()=>{
+    i++;status.textContent=steps[Math.min(i,steps.length-1)];fill.style.width=(i/steps.length*100)+"%";
+    if(i>=steps.length){clearInterval(t);setTimeout(()=>{
+      const splash=document.getElementById("splash");
+      splash.classList.add("fade-out");
+      setTimeout(()=>{
+        splash.classList.add("hidden");
+        const saved=localStorage.getItem("gym_session");
+        if(saved){try{SESSION=JSON.parse(saved);if(DB.users.some(u=>u.username===SESSION.username)){enterApp();return}}catch(e){}}
+        document.getElementById("login").classList.remove("hidden");
+        document.getElementById("loginUser").focus();
+      },560);
+    },350)}
+  },450);
+}
+loadDB();
+bootSplash();
+</script>
+</body>
+</html>
